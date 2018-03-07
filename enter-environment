@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+if [ ! -d "src" ] || [ ! -e "enter-environment" ]; then
+	echo "please execute in the top level directory; where src/ and enter-environment are"
+	exit 1;
+fi
+
+if [ -z "$SHELL" ]; then
+	echo "WARNING: \$SHELL not set, using bash"
+	SHELL_EXE="bash";
+else
+	SHELL_EXE="$SHELL";
+fi
+
+if [ ! -z "$GPU_SIMPLEX_ROOTDIR" ]; then
+	echo "WARNING: invocation from already initialized environment. Old GPU_SIMPLEX_ROOTDIR=$GPU_SIMPLEX_ROOTDIR";
+fi
+
+export GPU_SIMPLEX_ROOTDIR="$(readlink --canonicalize "$PWD")/";
+export GPU_SIMPLEX_CPUBINDIR="$GPU_SIMPLEX_ROOTDIR/build/EXE/";
+export GPU_SIMPLEX_GPUBINDIR="$GPU_SIMPLEX_ROOTDIR/build/GPU_EXE/";
+export GPU_SIMPLEX_SCRIPTSDIR="$GPU_SIMPLEX_ROOTDIR/scripts/";
+export GPU_SIMPLEX_BENCHMARKDIR="$GPU_SIMPLEX_ROOTDIR/benchmarks/";
+
+export PATH="$GPU_SIMPLEX_SCRIPTSDIR:$GPU_SIMPLEX_CPUBINDIR:$GPU_SIMPLEX_GPUBINDIR:$PATH"
+# export LD_LIBRARY_PATH="$(readlink --canonicalize ???):$LD_LIBRARY_PATH"
+
+echo "Entering $SHELL_EXE with setup environment. GPU_SIMPLEX_ROOTDIR=$GPU_SIMPLEX_ROOTDIR";
+$SHELL_EXE
+echo "Exiting environment. Old GPU_SIMPLEX_ROOTDIR=$GPU_SIMPLEX_ROOTDIR";
+
