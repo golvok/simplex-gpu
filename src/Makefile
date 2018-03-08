@@ -75,7 +75,7 @@ GPULDFLAGS += $(GPU_EXTRA_FLAGS) $(GPU_WARNING_FLAGS) $(GPU_LIBRARY_LINK_FLAGS)
 .PRECIOUS: $(OBJ_DIR)%.o
 
 # define source directories
-SOURCE_DIRS = basic/ util/ parsing/ ./
+SOURCE_DIRS = datastructures/ parsing/ util/ ./
 
 ALL_OBJ_DIRS  = $(addprefix $(OBJ_DIR),  $(SOURCE_DIRS))
 ALL_DEPS_DIRS = $(addprefix $(DEPS_DIR), $(SOURCE_DIRS))
