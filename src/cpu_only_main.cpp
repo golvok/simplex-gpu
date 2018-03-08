@@ -1,5 +1,6 @@
 
 #include <datastructures/tableau.hpp>
+#include <algo/cpu_algos.hpp>
 #include <parsing/cmdargs.hpp>
 #include <util/logging.hpp>
 
@@ -23,7 +24,14 @@ int main(int argc, char const** argv) {
 }
 
 int program_main(const ProgramConfig& config) {
+	using namespace simplex;
+	using namespace simplex::cpu;
 
 	dout(DL::INFO) << config.getWidth();
+
+	Problem problem;
+	auto result = algo_from_paper(problem);
+	(void) result;
+
 	return 0;
 }
