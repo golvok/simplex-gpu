@@ -75,7 +75,7 @@ GPULDFLAGS += $(GPU_EXTRA_FLAGS) $(GPU_WARNING_FLAGS) $(GPU_LIBRARY_LINK_FLAGS)
 .PRECIOUS: $(OBJ_DIR)%.o
 
 # define source directories
-SOURCE_DIRS = datastructures/ parsing/ util/ ./
+SOURCE_DIRS = datastructures/ impl/ parsing/ util/ ./
 
 ALL_OBJ_DIRS  = $(addprefix $(OBJ_DIR),  $(SOURCE_DIRS))
 ALL_DEPS_DIRS = $(addprefix $(DEPS_DIR), $(SOURCE_DIRS))
@@ -101,8 +101,9 @@ build_info:
 
 # add more dependencies here:
 $(EXE_DIR)simplex-cpu-only: \
-	$(OBJ_DIR)util/logging.o \
+	$(OBJ_DIR)impl/cpu_impl.o \
 	$(OBJ_DIR)parsing/cmdargs.o \
+	$(OBJ_DIR)util/logging.o \
 	$(OBJ_DIR)cpu_only_main.o \
 
 
