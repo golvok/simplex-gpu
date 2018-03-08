@@ -305,15 +305,15 @@ public:
 		flush(); // ensure each ss is printed immediately
 	}
 
-	uint getIndentLevel() {
+	int getIndentLevel() {
 		return indent_level;
 	}
 
-	uint getNumSpacesToIndent() {
+	int getNumSpacesToIndent() {
 		return indent_level * 2;
 	}
 
-	uint getTitleLevel() {
+	int getTitleLevel() {
 		if (indent_level >= highest_title_rank) {
 			return 1;
 		} else {

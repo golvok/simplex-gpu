@@ -31,8 +31,8 @@ namespace util {
 	}
 
 	template<typename FUNC>
-	void repeat(uint count, const FUNC& f) {
-		for (uint i = 1; i <= count; ++i) {
+	void repeat(int count, const FUNC& f) {
+		for (int i = 1; i <= count; ++i) {
 			f();
 		}
 	}
