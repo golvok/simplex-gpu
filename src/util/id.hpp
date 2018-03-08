@@ -30,8 +30,8 @@ public:
 	using IDType = id_type;
 	using ThisIDType = ID<id_type,TAG>;
 	constexpr static id_type DEFAULT_VALUE = TAG::DEFAULT_VALUE;
-	constexpr static unsigned long long BIT_SIZE = sizeof(IDType)*CHAR_BIT;
-	constexpr static unsigned long long JUST_HIGH_BIT = static_cast<IDType>(1) << (BIT_SIZE-1);
+	constexpr static unsigned long long BIT_SIZE = static_cast<unsigned long long>(sizeof(IDType)*CHAR_BIT);
+	constexpr static unsigned long long JUST_HIGH_BIT = static_cast<unsigned long long>(static_cast<IDType>(1) << (BIT_SIZE-1));
 
 	ID() : value(TAG::DEFAULT_VALUE) { }
 	ID(const ID&) = default;
