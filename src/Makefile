@@ -53,6 +53,7 @@ ifeq ($(BUILD_MODE),release)
 endif
 
 LIBRARY_LINK_FLAGS += \
+	-lboost_program_options \
 	-lstdc++ \
 
 
@@ -74,7 +75,7 @@ GPULDFLAGS += $(GPU_EXTRA_FLAGS) $(GPU_WARNING_FLAGS) $(GPU_LIBRARY_LINK_FLAGS)
 .PRECIOUS: $(OBJ_DIR)%.o
 
 # define source directories
-SOURCE_DIRS = basic/ util/ ./
+SOURCE_DIRS = basic/ util/ parsing/ ./
 
 ALL_OBJ_DIRS  = $(addprefix $(OBJ_DIR),  $(SOURCE_DIRS))
 ALL_DEPS_DIRS = $(addprefix $(DEPS_DIR), $(SOURCE_DIRS))
@@ -100,10 +101,14 @@ build_info:
 
 # add more dependencies here:
 $(EXE_DIR)simplex-cpu-only: \
+	$(OBJ_DIR)util/logging.o \
+	$(OBJ_DIR)parsing/cmdargs.o \
 	$(OBJ_DIR)cpu_only_main.o \
 
 
 $(GPU_EXE)simplex: \
+	$(OBJ_DIR)util/logging.o \
+	$(OBJ_DIR)parsing/cmdargs.o \
 	$(OBJ_DIR)gpu_cpu_main.o \
 
 
