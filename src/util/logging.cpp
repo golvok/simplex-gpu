@@ -14,7 +14,7 @@ namespace DebugLevel {
 
 	std::vector<Level> getStandardDebug() {
 		return {
-			ROUTE_D1, ROUTE_D2,
+			DBG1,
 			DATA_READ1,
 		};
 	}
@@ -26,11 +26,7 @@ namespace DebugLevel {
 	 * a given Level may appear in multiple chains.
 	 */
 	std::vector<std::vector<Level>> enable_chains {
-		{ MAZE_ROUTE_STEP, ROUTE_D4, ROUTE_D3, ROUTE_D2, ROUTE_D1, },
-		{ MAZE_ROUTE_STEP, PIN_BY_PIN_STEP, },
-		{ ROUTE_TIME, },
-		{ APL_D4, APL_D3, APL_D2, APL_D1, },
-		{ DATA_READ1, },
+		{ DBG4, DBG3, DBG2, DBG1, },
 	};
 
 	std::vector<Level> getAllShouldBeEnabled(Level l) {
@@ -49,19 +45,11 @@ namespace DebugLevel {
 		{ INFO,  "INFO"  },
 		{ WARN,  "WARN"  },
 		{ ERROR, "ERROR" },
-		{ ROUTE_D1, "ROUTE_D1" },
-		{ ROUTE_D2, "ROUTE_D2" },
-		{ ROUTE_D3, "ROUTE_D3" },
-		{ ROUTE_D4, "ROUTE_D4" },
 
-		{ PIN_BY_PIN_STEP, "PIN_BY_PIN_STEP" },
-		{ MAZE_ROUTE_STEP, "MAZE_ROUTE_STEP" },
-		{ ROUTE_TIME, "ROUTE_TIME" },
-
-		{ APL_D4, "APL_D4" },
-		{ APL_D3, "APL_D3" },
-		{ APL_D2, "APL_D2" },
-		{ APL_D1, "APL_D1" },
+		{ DBG1,  "DBG1" },
+		{ DBG2,  "DBG2" },
+		{ DBG3,  "DBG3" },
+		{ DBG4,  "DBG4" },
 
 		{ DATA_READ1, "DATA_READ1" },
 	};
