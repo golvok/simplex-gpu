@@ -16,10 +16,19 @@ template<typename FloatType>
 struct ThetaValuesAndEnteringColumn {
 	std::vector<FloatType> theta_values;
 	std::vector<FloatType> entering_column;
+
+	ThetaValuesAndEnteringColumn(std::ptrdiff_t height)
+		: theta_values((std::size_t)height)
+		, entering_column((std::size_t)height)
+	{ }
+
+	ThetaValuesAndEnteringColumn(const ThetaValuesAndEnteringColumn&) = default;
+	ThetaValuesAndEnteringColumn(ThetaValuesAndEnteringColumn&&) = default;
 };
 
 Tableau<double> create_tableau(const Problem& problem_stmt);
 
+// find smallest also negative value in the first row
 boost::optional<VariableID> find_entering_variable(const Tableau<double>& tab);
 
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableID entering);
