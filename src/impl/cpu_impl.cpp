@@ -4,12 +4,89 @@
 
 #include <exception>
 
+#include <Eigen/Core>
+#include <Eigen/LU>
+
 namespace simplex {
 namespace cpu {
 
 Tableau<double> create_tableau(const Problem& problem_stmt) {
+	/* A' \in R^mXn, c' \in R^n
+	 * max c'x' s.t. A'x' \leq b' && x' \geq 0
+	 * ===
+	 * A  = (A' I) \in R^mX(n+m), c = (c', 0, ...) \in R^(n+m)
+	 * max cx s.t. Ax = b && x \geq 0
+	 *   def: A = (B, N), B \in R^mXm, B is "basic matrix", N nonbasic
+	 *  note: wikipedia's \lambda = (B^T)^-1 c_B
+	 *                    and s_N = c_N - N^T \lambda = c_N - N^T (B^T)^-1 c_b
+	 * steps:
+	 *   use formulae from paper to compute 1st column and rest-of-tableau sections
+	 *     - will have to use matrix library - involves inverting matrices.
+	 *     -
+	 */
+
+	const auto indent = dout(DL::DBG1).indentWithTitle("create_tableau");
 	(void)problem_stmt;
-	util::print_and_throw<std::logic_error>([](auto&& s) { s << "unimplemented"; });
+
+	const long num_constraints = 2;
+	const long num_variables = 3;
+
+	Eigen::VectorXd constraint_consts(2); constraint_consts <<
+		10, 15
+	;
+
+	Eigen::MatrixXd basis(num_constraints,num_constraints); basis <<
+		3, 2,
+		2, 5
+	;
+
+	Eigen::RowVectorXd basic_coeff(num_constraints); basic_coeff <<
+		-2, -3
+	;
+
+	Eigen::MatrixXd nonbasics(num_constraints,num_variables); nonbasics <<
+		1, 1, 0,
+		3, 0, 1
+	;
+
+	Eigen::RowVectorXd nonbasics_coeff(num_variables); nonbasics_coeff <<
+		-4, 0, 0
+	;
+
+	const auto& inv_basis = basis.inverse();
+	const auto& inv_basis_times_nonbasis = inv_basis*nonbasics;
+	const auto& inv_basis_times_constraint_coeffs = inv_basis*constraint_consts;
+
+	const auto& upper_right = basic_coeff*inv_basis_times_nonbasis - nonbasics_coeff;
+	const auto& lower_right = inv_basis_times_nonbasis;
+
+	const auto& upper_left = basic_coeff*inv_basis_times_constraint_coeffs;
+	const auto& lower_left = inv_basis_times_constraint_coeffs;
+
+	dout(DL::DBG3) << "upper_right:\n" << upper_right << '\n';
+	dout(DL::DBG3) << "lower_right:\n" << lower_right << '\n';
+
+	dout(DL::DBG3) << "upper_left:\n" << upper_left << '\n';
+	dout(DL::DBG3) << "lower_left:\n" << lower_left << '\n';
+
+	Eigen::MatrixXd tableau_data(num_constraints+1, num_variables+1); tableau_data <<
+		upper_left, upper_right, lower_left, lower_right
+	;
+
+	dout(DL::DBG3) << "tableau_data:\n" << tableau_data << '\n';
+
+	Tableau<double> result (
+		tableau_data.rows(),
+		tableau_data.cols()
+	);
+
+	for (std::ptrdiff_t irow = 0; irow < tableau_data.rows(); ++irow) {
+		for (std::ptrdiff_t icol = 0; icol < tableau_data.cols(); ++icol) {
+			result.at(irow, icol) = tableau_data(irow, icol);
+		}
+	}
+
+	return result;
 }
 
 boost::optional<VariableID> find_entering_variable(const Tableau<double>& tab) {
