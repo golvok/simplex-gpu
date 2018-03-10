@@ -59,6 +59,7 @@ LIBRARY_LINK_FLAGS += \
 
 INCLUDE_FLAGS += \
 	-I . \
+	-isystem ../include \
 
 
 CXXFLAGS += $(EXTRA_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS)
