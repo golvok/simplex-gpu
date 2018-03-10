@@ -1,27 +1,58 @@
 #ifndef DATASTRUCTURES__TABLEAU_H
 #define DATASTRUCTURES__TABLEAU_H
 
+#include <impl/impl_common.hpp>
+#include <util/print_printable.hpp>
+
 #include <vector>
 
 namespace simplex {
 
 template<typename FloatType>
-class Tableau {
+class Tableau : public util::print_printable {
 public:
-	Tableau(int width, int height)
+	Tableau(std::ptrdiff_t height, std::ptrdiff_t width)
 		: m_data_width(width)
 		, m_data_height(height)
+		, m_width(width)
+		, m_height(height)
 		, m_data(static_cast<std::size_t>(width*height))
 	{ }
 
-	const FloatType& at(int x, int y) const { return m_data[indexof(x,y)]; }
-	      FloatType& at(int x, int y)       { return m_data[indexof(x,y)]; }
+	const FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col) const { return m_data.at(indexof(row,col)); }
+	      FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col)       { return m_data.at(indexof(row,col)); }
 
-	int indexof(int x, int y) const { return y*m_data_width + x; }
+	const FloatType& at(std::ptrdiff_t row, VariableID col) const { return at(row, col.getValue()); }
+	      FloatType& at(std::ptrdiff_t row, VariableID col)       { return at(row, col.getValue()); }
+
+	const FloatType& at(VariableID row, std::ptrdiff_t col) const { return at(row.getValue(), col); }
+	      FloatType& at(VariableID row, std::ptrdiff_t col)       { return at(row.getValue(), col); }
+
+	const FloatType& at(VariableID row, VariableID col) const { return at(row.getValue(), col.getValue()); }
+	      FloatType& at(VariableID row, VariableID col)       { return at(row.getValue(), col.getValue()); }
+
+	auto indexof(std::ptrdiff_t row, std::ptrdiff_t col) const { return static_cast<std::size_t>(row*m_data_width + col); }
+
+	auto width() const { return m_width; }
+	auto height() const { return m_height; }
+
+	template<typename STREAM>
+	void print(STREAM& os) const {
+		for (std::ptrdiff_t irow = 0; irow < height(); ++irow) {
+			for (std::ptrdiff_t icol = 0; icol < width(); ++icol) {
+				os << ' ' << at(irow, icol);
+			}
+			if (irow != height() - 1) {
+				os << '\n';
+			}
+		}
+	}
 
 private:
-	int m_data_width;
-	int m_data_height;
+	std::ptrdiff_t m_data_width;
+	std::ptrdiff_t m_data_height;
+	std::ptrdiff_t m_width;
+	std::ptrdiff_t m_height;
 	std::vector<FloatType> m_data;
 };
 
