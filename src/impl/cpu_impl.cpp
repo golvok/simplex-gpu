@@ -120,7 +120,7 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	for (int irow = 0; irow < tab.height(); ++irow) {
 		const auto& val_at_entering = tab.at(irow, entering);
 		result.entering_column.at((std::size_t)irow) = val_at_entering;
-		result.theta_values.at((std::size_t)irow) = tab.at(irow, 1)/val_at_entering;
+		result.theta_values.at((std::size_t)irow) = tab.at(irow, 0)/val_at_entering;
 	}
 
 	dout(DL::DBG1) << "theta_values computed: ";
@@ -141,7 +141,7 @@ VariableID find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tva
 	for (int irow = 1; irow < (int)tvals_and_centering.theta_values.size(); ++irow) {
 		const auto& theta_val = tvals_and_centering.theta_values.at((std::size_t)irow);
 		const auto& tab_val = tvals_and_centering.entering_column.at((std::size_t)irow);
-		if (tab_val < 0 && (!result || theta_val < lowest_theta_value)) {
+		if (tab_val > 0 && (!result || theta_val < lowest_theta_value)) {
 			lowest_theta_value = theta_val;
 			result = util::make_id<VariableID>(irow);
 		}
@@ -165,6 +165,8 @@ Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<doub
 		tab.at(leaving_and_entering.leaving, icol) /= denom;
 	}
 
+	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
+
 	return tab;
 }
 
@@ -179,6 +181,8 @@ Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<do
 			tab.at(irow, icol) -= tab.at(leaving, icol) * entering_col_val;
 		}
 	}
+
+	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;
 }
@@ -195,6 +199,8 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 			tab.at(irow, leaving_and_entering.entering) = - entering_column.at((std::size_t)irow)/denom;
 		}
 	}
+
+	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;
 }
