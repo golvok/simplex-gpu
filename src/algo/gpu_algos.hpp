@@ -7,14 +7,14 @@
 #include <boost/variant.hpp>
 
 namespace simplex{
-namespace cpu {
+namespace gpu {
 
 boost::variant<
 	Assignments,
 	TableauErrors
 > algo_from_paper(const Problem& problem);
 
-} // end namespace cpu
+} // end namespace gpu
 } // end namespace simplex
 
 #endif /* ALGO__CPU_ARGOS */

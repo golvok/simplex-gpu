@@ -10,7 +10,7 @@
 #include <boost/optional.hpp>
 
 namespace simplex {
-namespace cpu {
+namespace gpu {
 
 template<typename FloatType>
 struct ThetaValuesAndEnteringColumn {
@@ -42,6 +42,6 @@ Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<do
 Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering);
 
 } // end namespace simplex
-} // end namespace cpu
+} // end namespace gpu
 
 #endif /* IMLP__CPU_IMPL_H */

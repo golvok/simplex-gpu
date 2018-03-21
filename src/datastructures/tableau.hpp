@@ -31,10 +31,12 @@ public:
 	const FloatType& at(VariableID row, VariableID col) const { return at(row.getValue(), col.getValue()); }
 	      FloatType& at(VariableID row, VariableID col)       { return at(row.getValue(), col.getValue()); }
 
-	auto indexof(std::ptrdiff_t row, std::ptrdiff_t col) const { return static_cast<std::size_t>(row*m_data_width + col); }
+	const FloatType& cost() const { return at(0,0); }
 
-	auto width() const { return m_width; }
-	auto height() const { return m_height; }
+	std::size_t indexof(std::ptrdiff_t row, std::ptrdiff_t col) const { return static_cast<std::size_t>(row*m_data_width + col); }
+
+	std::ptrdiff_t width() const { return m_width; }
+	std::ptrdiff_t height() const { return m_height; }
 
 	template<typename STREAM>
 	void print(STREAM& os) const {

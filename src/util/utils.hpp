@@ -37,30 +37,8 @@ namespace util {
 		}
 	}
 
-	template<typename FUNC, typename VALUE>
-	auto repeat_extra_times(size_t num_extra_times, VALUE&& v, const FUNC& f) {
-		auto result = f(v);
-		for (size_t i = 0; i < num_extra_times; ++i) {
-			result = f(result);
-		}
-		return result;
-	}
-
-	template<typename COLLECTION, typename VALUE>
-	auto skip_find(const COLLECTION& c, size_t num_to_skip, const VALUE& v) {
-		using std::begin; using std::end; using std::next;
-		auto curr = std::find(begin(c), end(c), v);
-		for (size_t match_num = 2; (match_num-1) <= num_to_skip; ++match_num) {
-			curr = std::find(next(curr), end(c), v);
-			if (curr == end(c)) {
-				break;
-			}
-		}
-		return curr;
-	}
-
 	template<typename T>
-	auto make_shared(T&& t) {
+	std::shared_ptr<T> make_shared(T&& t) {
 		return std::make_shared<
 			typename std::remove_cv<
 				typename std::remove_reference<T>::type
@@ -71,7 +49,7 @@ namespace util {
 	}
 
 	template<typename T>
-	auto make_copy(const T& t) {
+	T make_copy(const T& t) {
 		return T(t);
 	}
 
@@ -161,7 +139,7 @@ using EnableIfIntegral = typename std::enable_if<std::is_integral<T>::value,V>;
 template<typename CAST_TO>
 struct StaticCaster {
 	template<typename SRC>
-	auto operator()(SRC src) const {
+	CAST_TO operator()(SRC src) const {
 		return static_cast<CAST_TO>(src);
 	}
 };

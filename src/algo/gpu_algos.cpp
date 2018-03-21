@@ -1,10 +1,10 @@
 #include "gpu_algos.hpp"
 
-#include <impl/cpu_impl.hpp>
+#include <impl/gpu_impl.hpp>
 #include <util/logging.hpp>
 
 namespace simplex{
-namespace cpu {
+namespace gpu {
 
 boost::variant<
 	Assignments,
@@ -56,5 +56,5 @@ boost::variant<
 	return Assignments{};
 }
 
-} // end namespace cpu
+} // end namespace gpu
 } // end namespace simplex

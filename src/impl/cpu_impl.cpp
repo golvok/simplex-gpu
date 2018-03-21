@@ -32,25 +32,32 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	const long num_variables = 3;
 
 	Eigen::VectorXd constraint_consts(2); constraint_consts <<
+		// 6,9 
 		10, 15
 	;
 
 	Eigen::MatrixXd basis(num_constraints,num_constraints); basis <<
+		// 1, 2,
 		3, 2,
+		// 2, 1 
 		2, 5
 	;
 
 	Eigen::RowVectorXd basic_coeff(num_constraints); basic_coeff <<
-		-2, -3
+		// 2, 3
+		2, 3
 	;
 
 	Eigen::MatrixXd nonbasics(num_constraints,num_variables); nonbasics <<
+		// 1, 0,
 		1, 1, 0,
+		// 0, 1 
 		3, 0, 1
 	;
 
 	Eigen::RowVectorXd nonbasics_coeff(num_variables); nonbasics_coeff <<
-		-4, 0, 0
+		// 0, 0
+		4, 0, 0
 	;
 
 	const auto& inv_basis = basis.inverse();
@@ -71,6 +78,9 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 
 	Eigen::MatrixXd tableau_data(num_constraints+1, num_variables+1); tableau_data <<
 		upper_left, upper_right, lower_left, lower_right
+		// 9.0, 1.0, -0.5, 0.0, 3.0/2.0, 0.0,
+		// 3.0, 0.0,  0.5, 1.0, 0.5    , 0.0,
+		// 6.0, 0.0,3/2.0, 0  , -0.5   , 1.0
 	;
 
 	dout(DL::DBG3) << "tableau_data:\n" << tableau_data << '\n';

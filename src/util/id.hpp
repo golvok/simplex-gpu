@@ -22,10 +22,10 @@ protected:
 	explicit ID(const id_type& value) : value(value) { }
 
 	template<typename ID_TYPE, typename... ARGS>
-	friend auto make_id(ARGS&&... args) -> std::enable_if_t<
+	friend auto make_id(ARGS&&... args) -> typename std::enable_if<
 		std::is_base_of<typename ID_TYPE::ThisIDType,ID_TYPE>::value,
 		ID_TYPE
-	>;
+	>::type;
 public:
 	using IDType = id_type;
 	using ThisIDType = ID<id_type,TAG>;
@@ -46,10 +46,10 @@ public:
 };
 
 template<typename ID_TYPE, typename... ARGS>
-auto make_id(ARGS&&... args) -> std::enable_if_t<
+auto make_id(ARGS&&... args) -> typename std::enable_if<
 	std::is_base_of<typename ID_TYPE::ThisIDType,ID_TYPE>::value,
 	ID_TYPE
-> {
+>::type {
 	return ID_TYPE(std::forward<ARGS>(args)...);
 }
 
@@ -71,7 +71,7 @@ public:
 };
 
 template<typename... ARGS>
-auto make_id_generator(ARGS&&... args) {
+IDGenerator<ARGS...> make_id_generator(ARGS&&... args) {
 	return IDGenerator<ARGS...>(std::forward<ARGS>(args)...);
 }
 
@@ -89,14 +89,14 @@ template<class T, typename = void>
 struct IDHasher;
 
 template<class T>
-struct IDHasher<T, std::enable_if_t<std::is_base_of<IDBase, T>::value>> {
+struct IDHasher<T, typename std::enable_if<std::is_base_of<IDBase, T>::value>::type> {
 	std::size_t operator()(const T& id) const {
 		return std::hash<decltype(id.getValue())>()(id.getValue());
 	}
 };
 
 template<class T>
-struct MyHash<T, std::enable_if_t<std::is_base_of<IDBase, T>::value>> {
+struct MyHash<T, typename std::enable_if<std::is_base_of<IDBase, T>::value>::type> {
 	using type = IDHasher<T>;
 };
 

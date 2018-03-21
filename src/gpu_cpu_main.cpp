@@ -1,4 +1,5 @@
 
+#include <algo/gpu_algos.hpp>
 #include <datastructures/tableau.hpp>
 #include <parsing/cmdargs.hpp>
 #include <util/logging.hpp>
@@ -23,7 +24,12 @@ int main(int argc, char const** argv) {
 }
 
 int program_main(const ProgramConfig& config) {
+	using simplex::Problem;
+	using simplex::gpu::algo_from_paper;
 
-	dout(DL::INFO) << config.getWidth();
+	Problem problem;
+	auto result = algo_from_paper(problem);
+	(void) result;
+
 	return 0;
 }

@@ -8,7 +8,7 @@
 #include <Eigen/LU>
 
 namespace simplex {
-namespace cpu {
+namespace gpu {
 
 Tableau<double> create_tableau(const Problem& problem_stmt) {
 	/* A' \in R^mXn, c' \in R^n
@@ -206,4 +206,4 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 }
 
 } // end namespace simplex
-} // end namespace cpu
+} // end namespace gpu
