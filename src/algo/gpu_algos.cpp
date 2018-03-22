@@ -4,6 +4,8 @@
 #include <impl/gpu_impl.hpp>
 #include <util/logging.hpp>
 
+#include <cuda_runtime.h>
+
 namespace simplex{
 
 boost::variant<
@@ -11,28 +13,40 @@ boost::variant<
 	TableauErrors
 > gpu_cpu_algo_from_paper(const Problem& problem) {
 	using cpu::create_tableau;
-	using cpu::get_theta_values_and_entering_column;
+	using gpu::get_theta_values_and_entering_column;
 	using cpu::find_entering_variable;
 	using gpu::update_leaving_row;
 	using gpu::update_rest_of_basis;
 	using gpu::update_entering_column;
 
 	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (CPU)");
-	auto tableau = create_tableau(problem);
+
+	auto cpu_tableau = create_tableau(problem);
+	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.width(), cpu_tableau.height());
+
+	auto copy_tableau_gpu_to_cpu = [&]() { cudaMemcpy(cpu_tableau.data(), gpu_tableau.data(), static_cast<std::size_t>(gpu_tableau.data_size()), cudaMemcpyDeviceToHost); };
+	auto copy_tableau_cpu_to_gpu = [&]() { cudaMemcpy(gpu_tableau.data(), cpu_tableau.data(), static_cast<std::size_t>(cpu_tableau.data_size()), cudaMemcpyHostToDevice); };
+
+	cudaMalloc(&gpu_tableau.data(), static_cast<std::size_t>(cpu_tableau.data_size()));
+	copy_tableau_cpu_to_gpu();
 	int iteration_num = 1;
 
 	while (true) {
 		const auto indent = dout(DL::INFO).indentWithTitle([&](auto&& s){ s << "Iteration " << iteration_num; });
-		dout(DL::DBG1) << "tableau:\n" << tableau << '\n';
+		copy_tableau_gpu_to_cpu();
 
-		const auto entering_var = find_entering_variable(tableau);
+		if (dout(DL::DBG1).enabled()) {
+			dout(DL::DBG1) << "tableau:\n" << cpu_tableau << '\n';
+		}
+
+		const auto entering_var = find_entering_variable(cpu_tableau);
 
 		if (!entering_var) {
 			break;
 		}
 		
 		// k1
-		auto tv_and_centering = get_theta_values_and_entering_column(tableau, *entering_var);
+		auto tv_and_centering = get_theta_values_and_entering_column(gpu_tableau, *entering_var);
 		
 		VariablePair entering_and_leaving = {
 			*entering_var,
@@ -40,17 +54,17 @@ boost::variant<
 		};
 
 		update_leaving_row( // k2
-			tableau,
+			gpu_tableau,
 			tv_and_centering.entering_column,
 			entering_and_leaving
 		),
 		update_rest_of_basis( // k3
-			tableau,
+			gpu_tableau,
 			tv_and_centering.entering_column,
 			entering_and_leaving.leaving
 		),
 		update_entering_column( //k4
-			tableau,
+			gpu_tableau,
 			tv_and_centering.entering_column,
 			entering_and_leaving
 		);
@@ -58,9 +72,14 @@ boost::variant<
 		iteration_num += 1;
 	}
 
+	copy_tableau_gpu_to_cpu();
+
 	{const auto indent = dout(DL::INFO).indentWithTitle("Result");
-		dout(DL::INFO) << tableau;
+		dout(DL::INFO) << cpu_tableau << '\n';
 	}
+
+	cudaFree(gpu_tableau.data());
+	delete cpu_tableau.data();
 
 	return Assignments{};
 }

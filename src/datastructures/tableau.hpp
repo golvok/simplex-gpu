@@ -36,7 +36,9 @@ public:
 	std::ptrdiff_t width() const { return m_width; }
 	std::ptrdiff_t height() const { return m_height; }
 
-	FloatType* data() const { return m_data; }
+	FloatType*& data() { return m_data; }
+	FloatType* const& data() const { return m_data; }
+	std::ptrdiff_t data_size() const { return m_data_width*m_data_height; }
 
 	template<typename STREAM>
 	void print(STREAM& os) const {

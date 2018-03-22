@@ -49,7 +49,7 @@ boost::variant<
 	}
 
 	{const auto indent = dout(DL::INFO).indentWithTitle("Result");
-		dout(DL::INFO) << tableau;
+		dout(DL::INFO) << tableau << '\n';
 	}
 
 	delete tableau.data();
