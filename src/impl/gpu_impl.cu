@@ -87,6 +87,10 @@ void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<doubl
 	// }
 
 	// std::cout << "tableau after:\n" << tab << '\n';
+	int numBlocks = 32;
+	int threadsPerBlock = 32;
+
+	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving.getValue());
 }
 
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
@@ -101,6 +105,10 @@ void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<dou
 	// }
 
 	// std::cout << "tableau after:\n" << tab << '\n';
+	int numBlocks = 32;
+	int threadsPerBlock = 32;
+
+	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
 }
 
 } // end namespace simplex
