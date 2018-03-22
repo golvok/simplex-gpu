@@ -52,6 +52,8 @@ boost::variant<
 		dout(DL::INFO) << tableau;
 	}
 
+	delete tableau.data();
+
 	return Assignments{};
 }
 

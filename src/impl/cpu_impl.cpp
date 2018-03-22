@@ -86,6 +86,7 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	dout(DL::DBG3) << "tableau_data:\n" << tableau_data << '\n';
 
 	Tableau<double> result (
+		new double[static_cast<std::size_t>(tableau_data.rows() * tableau_data.cols())],
 		tableau_data.rows(),
 		tableau_data.cols()
 	);

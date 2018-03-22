@@ -9,12 +9,12 @@ namespace simplex {
 template<typename FloatType>
 class Tableau : public util::print_printable {
 public:
-	Tableau(std::ptrdiff_t height, std::ptrdiff_t width)
+	Tableau(FloatType* data, std::ptrdiff_t height, std::ptrdiff_t width)
 		: m_data_width(width)
 		, m_data_height(height)
 		, m_width(width)
 		, m_height(height)
-		, m_data(0)
+		, m_data(data)
 	{ }
 
 	const FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col) const { return m_data[indexof(row,col)]; }
@@ -35,6 +35,8 @@ public:
 
 	std::ptrdiff_t width() const { return m_width; }
 	std::ptrdiff_t height() const { return m_height; }
+
+	FloatType* data() const { return m_data; }
 
 	template<typename STREAM>
 	void print(STREAM& os) const {
