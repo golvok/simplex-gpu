@@ -25,10 +25,10 @@ int main(int argc, char const** argv) {
 
 int program_main(const ProgramConfig& config) {
 	using simplex::Problem;
-	using simplex::gpu::algo_from_paper;
+	using simplex::gpu_cpu_algo_from_paper;
 
 	Problem problem;
-	auto result = algo_from_paper(problem);
+	auto result = gpu_cpu_algo_from_paper(problem);
 	(void) result;
 
 	return 0;

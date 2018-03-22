@@ -1,15 +1,22 @@
 #include "gpu_algos.hpp"
 
+#include <impl/cpu_impl.hpp>
 #include <impl/gpu_impl.hpp>
 #include <util/logging.hpp>
 
 namespace simplex{
-namespace gpu {
 
 boost::variant<
 	Assignments,
 	TableauErrors
-> algo_from_paper(const Problem& problem) {
+> gpu_cpu_algo_from_paper(const Problem& problem) {
+	using cpu::create_tableau;
+	using cpu::get_theta_values_and_entering_column;
+	using cpu::find_entering_variable;
+	using gpu::update_leaving_row;
+	using gpu::update_rest_of_basis;
+	using gpu::update_entering_column;
+
 	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (CPU)");
 	auto tableau = create_tableau(problem);
 	int iteration_num = 1;
@@ -25,23 +32,25 @@ boost::variant<
 		}
 		
 		// k1
-		const auto tv_and_centering = get_theta_values_and_entering_column(tableau, *entering_var);
+		auto tv_and_centering = get_theta_values_and_entering_column(tableau, *entering_var);
 		
 		VariablePair entering_and_leaving = {
 			*entering_var,
 			find_leaving_variable(tv_and_centering),
 		};
 
-		tableau = update_entering_column( //k4
-			update_rest_of_basis( // k3
-				update_leaving_row( // k2
-					std::move(tableau),
-					tv_and_centering.entering_column,
-					entering_and_leaving
-				),
-				tv_and_centering.entering_column,
-				entering_and_leaving.leaving
-			),
+		update_leaving_row( // k2
+			tableau,
+			tv_and_centering.entering_column,
+			entering_and_leaving
+		),
+		update_rest_of_basis( // k3
+			tableau,
+			tv_and_centering.entering_column,
+			entering_and_leaving.leaving
+		),
+		update_entering_column( //k4
+			tableau,
 			tv_and_centering.entering_column,
 			entering_and_leaving
 		);
@@ -56,5 +65,4 @@ boost::variant<
 	return Assignments{};
 }
 
-} // end namespace gpu
 } // end namespace simplex

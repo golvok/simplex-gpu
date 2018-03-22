@@ -2,19 +2,23 @@
 #define IMPL__COMMON_INTERFACE
 
 #include <util/id.hpp>
+// #include <cstdint>
 
-#include <cstdint>
+#ifndef __CUDACC__
 #include <iostream>
+#endif
 
 namespace simplex {
 
-struct VariableIDTag { static const std::int32_t DEFAULT_VALUE = INT32_MIN; };
-using VariableID = util::ID<std::int32_t, VariableIDTag>;
+struct VariableIDTag { static const int DEFAULT_VALUE = -1; };
+typedef util::ID<int, VariableIDTag> VariableID;
 
+#ifndef __CUDACC__
 inline std::ostream& operator<<(std::ostream& os, const VariableID& id) {
 	os << "var" << id.getValue();
 	return os;
 }
+#endif
 
 struct VariablePair {
 	VariableID entering;

@@ -4,8 +4,6 @@
 #include <impl/impl_common.hpp>
 #include <util/print_printable.hpp>
 
-#include <vector>
-
 namespace simplex {
 
 template<typename FloatType>
@@ -16,11 +14,11 @@ public:
 		, m_data_height(height)
 		, m_width(width)
 		, m_height(height)
-		, m_data(static_cast<std::size_t>(width*height))
+		, m_data(0)
 	{ }
 
-	const FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col) const { return m_data.at(indexof(row,col)); }
-	      FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col)       { return m_data.at(indexof(row,col)); }
+	const FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col) const { return m_data[indexof(row,col)]; }
+	      FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col)       { return m_data[indexof(row,col)]; }
 
 	const FloatType& at(std::ptrdiff_t row, VariableID col) const { return at(row, col.getValue()); }
 	      FloatType& at(std::ptrdiff_t row, VariableID col)       { return at(row, col.getValue()); }
@@ -55,7 +53,7 @@ private:
 	std::ptrdiff_t m_data_height;
 	std::ptrdiff_t m_width;
 	std::ptrdiff_t m_height;
-	std::vector<FloatType> m_data;
+	FloatType* m_data;
 };
 
 } // end namespace simplex

@@ -1,7 +1,12 @@
 #ifndef UTIL__MY_HASH_H
 #define UTIL__MY_HASH_H
 
-#include <functional>
+#if __cplusplus >= 201103L
+
+namespace std {
+	template<typename T>
+	struct hash;
+}
 
 namespace util {
 
@@ -17,5 +22,7 @@ template<template <typename... ARGS> class CONTAINER, typename KEY, typename... 
 using with_my_hash_t = CONTAINER<KEY, REST..., MyHash_t<KEY>>;
 
 } // end namespace util
+
+#endif
 
 #endif // UTIL__MY_HASH_H

@@ -2,12 +2,9 @@
 #define UTIL_H
 
 #include <algorithm>
-#include <cstdint>
-#include <climits>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <type_traits>
 
 #include <iostream>
 
@@ -174,7 +171,7 @@ public:
  * *iter the first time it is called, then *std::next(iter), etc.
  */
 template<typename RETVAL_TYPE, typename ITER_TYPE>
-auto make_deref_and_incrementer(const ITER_TYPE& iter) {
+DerefAndIncrementer<RETVAL_TYPE,ITER_TYPE> make_deref_and_incrementer(const ITER_TYPE& iter) {
 	return DerefAndIncrementer<RETVAL_TYPE,ITER_TYPE>(iter);
 }
 
@@ -240,7 +237,7 @@ void print_container(
 	os << prefix_str;
 	if (beg != en) {
 		func(os,*beg);
-		std::for_each(std::next(beg), en, [&](const auto& v){
+		std::for_each(std::next(beg), en, [&](const decltype(*std::begin(c))& v){
 			os << sep;
 			func(os,v);
 		});
@@ -278,7 +275,7 @@ void print_assoc_container(
 		os << " -> ";
 		func_value(os,beg->second);
 		os << suffix_str;
-		std::for_each(std::next(beg), en, [&](const auto& v){
+		std::for_each(std::next(beg), en, [&](const decltype(*std::begin(c))& v){
 			os << sep;
 			os << prefix_str;
 			func_key(os,v.first);

@@ -66,7 +66,7 @@ CXXFLAGS += $(EXTRA_FLAGS) $(WARNING_FLAGS) $(INCLUDE_FLAGS)
 LDFLAGS  += $(EXTRA_FLAGS) $(WARNING_FLAGS) $(LIBRARY_LINK_FLAGS)
 
 GPUCC = nvcc
-GPU_EXTRA_FLAGS += -ccbin clang-3.8 -Wno-deprecated-gpu-targets -std=c++11
+GPU_EXTRA_FLAGS += -ccbin clang-3.8 -Wno-deprecated-gpu-targets --compiler-options -Wno-c++11-extensions
 GPU_LIBRARY_LINK_FLAGS += $(LIBRARY_LINK_FLAGS)
 GPU_INCLUDE_FLAGS += $(INCLUDE_FLAGS)
 GPUCCFLAGS += $(GPU_EXTRA_FLAGS) $(GPU_WARNING_FLAGS) $(GPU_INCLUDE_FLAGS)
