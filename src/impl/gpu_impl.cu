@@ -207,3 +207,54 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 
 } // end namespace simplex
 } // end namespace gpu
+
+
+// kernel codes
+
+__global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	double w = SimplexTableau[idx*width + k];
+	/*Copy the weights of entering index k*/
+	columnK[idx] = w;
+	theta[idx] = SimplexTableau[idx*width +1]/w;
+}
+
+__global__ void kernel2(double* SimplexTableau, int width, double* columnK, int r) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	__shared__ double w;
+
+	if (threadIdx.x == 0) w = columnK[r];
+	__syncthreads();
+
+	SimplexTableau[r*width + idx] = SimplexTableau[r*width + idx]/w;
+}
+
+__global__ void kernel3(double* SimplexTableau, int width, double* columnK, int r) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int jdx = blockIdx.y * blockDim.y + threadIdx.y;
+	__shared__ double w[16];
+	/*Get the column of entering index k in shared memory */
+	if(threadIdx.y == 0 && threadIdx.x < 16)
+	{
+		w[threadIdx.x] = columnK[blockIdx.y * blockDim.y+threadIdx.x];
+	}
+	__syncthreads();
+	/*Update the basis except the line r*/
+	if(jdx == r) return;
+	SimplexTableau[jdx*width + idx] = SimplexTableau[jdx*width + idx] - w[threadIdx.y] * SimplexTableau[r*width + idx];
+}
+
+__global__ void kernel4(double* SimplexTableau, int width, double* columnK, int k, int r) {
+	int jdx = blockDim.x * blockIdx.x + threadIdx.x;
+	__shared__ double w;
+	/*Get the pivot element : SimplexT ableau[r][k] in the
+	shared memory */
+	if(threadIdx.x == 0) w = columnK[r];
+	__syncthreads();
+	/*Update the column of the entering index k*/
+	SimplexTableau[jdx*width + k] = -columnK[jdx]/w;
+
+	/*Update the pivot element SimplexT ableau[r][k]*/
+	if(jdx == r) SimplexTableau[jdx*width + k]=1/w;
+
+}
