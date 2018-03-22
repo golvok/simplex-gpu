@@ -6,7 +6,7 @@
 #include <impl/impl_common.hpp>
 #include <util/primitive_structures.hpp>
 
-// #include <boost/optional.hpp>
+#include <cuda_runtime.h>
 
 namespace simplex {
 namespace gpu {
@@ -17,9 +17,12 @@ struct ThetaValuesAndEnteringColumn {
 	util::PointerAndSize<FloatType> entering_column;
 
 	ThetaValuesAndEnteringColumn(std::ptrdiff_t height)
-		: theta_values(0, (std::size_t)height)
-		, entering_column(0, (std::size_t)height)
-	{ }
+		: theta_values(NULL, height)
+		, entering_column(NULL, height)
+	{
+		cudaMalloc(&theta_values.data(), static_cast<std::size_t>(theta_values.size()));
+		cudaMalloc(&entering_column.data(), static_cast<std::size_t>(entering_column.size()));
+	}
 
 	// ThetaValuesAndEnteringColumn(const ThetaValuesAndEnteringColumn&) = default;
 	// ThetaValuesAndEnteringColumn(ThetaValuesAndEnteringColumn&&) = default;
