@@ -22,9 +22,15 @@ public:
 	const T& at(Index i) const { return m_data[i]; }
 
 	Index size() const { return m_size; }
+	std::ptrdiff_t data_size() const { return size()*(std::ptrdiff_t)sizeof(T); }
 
-	T* data() { return m_data; }
-	const T* data() const { return m_data; }
+	T*& data() { return m_data; }
+
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wreturn-stack-address"
+	// the following incorrectly gives a warning (known bug in clang 3.8)
+	const T* const& data() const { return m_data; }
+	#pragma clang diagnostic pop
 
 	T* m_data;
 	Index m_size;
