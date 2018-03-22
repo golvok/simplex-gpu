@@ -2,6 +2,11 @@
 
 // #include <util/utils.hpp>
 
+__global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k);
+__global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r);
+__global__ void kernel3(double* SimplexTableau, int width, const double* columnK, int r);
+__global__ void kernel4(double* SimplexTableau, int width, const double* columnK, int k, int r);
+
 namespace simplex {
 namespace gpu {
 
@@ -9,6 +14,7 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	(void)problem_stmt;
 
 	Tableau<double> result (
+		0,
 		4,
 		5
 	);
@@ -65,7 +71,9 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 	// 	tab.at(leaving_and_entering.leaving, icol) /= denom;
 	// }
 
-	// std::cout << "tableau after:\n" << tab << '\n';
+	int numBlocks = 32;
+	int threadsPerBlock = 32;
+	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableID leaving) {
@@ -109,7 +117,7 @@ __global__ void kernel1(double* SimplexTableau, int width, double* theta, double
 	theta[idx] = SimplexTableau[idx*width +1]/w;
 }
 
-__global__ void kernel2(double* SimplexTableau, int width, double* columnK, int r) {
+__global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	__shared__ double w;
 
@@ -119,7 +127,7 @@ __global__ void kernel2(double* SimplexTableau, int width, double* columnK, int 
 	SimplexTableau[r*width + idx] = SimplexTableau[r*width + idx]/w;
 }
 
-__global__ void kernel3(double* SimplexTableau, int width, double* columnK, int r) {
+__global__ void kernel3(double* SimplexTableau, int width, const double* columnK, int r) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	int jdx = blockIdx.y * blockDim.y + threadIdx.y;
 	__shared__ double w[16];
@@ -134,7 +142,7 @@ __global__ void kernel3(double* SimplexTableau, int width, double* columnK, int 
 	SimplexTableau[jdx*width + idx] = SimplexTableau[jdx*width + idx] - w[threadIdx.y] * SimplexTableau[r*width + idx];
 }
 
-__global__ void kernel4(double* SimplexTableau, int width, double* columnK, int k, int r) {
+__global__ void kernel4(double* SimplexTableau, int width, const double* columnK, int k, int r) {
 	int jdx = blockDim.x * blockIdx.x + threadIdx.x;
 	__shared__ double w;
 	/*Get the pivot element : SimplexT ableau[r][k] in the
