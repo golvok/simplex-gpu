@@ -32,13 +32,6 @@ private:
 };
 
 struct ProgramConfig {
-	const std::string& dataFileName() const { return m_dataFileName; }
-	int nThreads() const { return m_nThreads; }
-
-	int getWidth() const { return *width; }
-	int getHeight() const {return *height; }
-
-private:
 	friend struct ParsedArguments;
 	friend ParsedArguments parse(int arc_int, char const** argv);
 
@@ -47,8 +40,10 @@ private:
 	std::string m_dataFileName;
 	int m_nThreads;
 
-	boost::optional<int> width;
-	boost::optional<int> height;
+	bool use_random_problem;
+	boost::optional<int> num_variables;
+	boost::optional<int> num_constraints;
+	boost::optional<double> constraint_density;
 };
 
 struct ParsedArguments {

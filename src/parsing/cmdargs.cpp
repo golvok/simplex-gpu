@@ -26,9 +26,11 @@ MetaConfig::MetaConfig()
 
 ProgramConfig::ProgramConfig()
 	: m_dataFileName()
-	, m_nThreads(2)
-	, width()
-	, height()
+	, m_nThreads(1)
+	, use_random_problem(false)
+	, num_variables()
+	, num_constraints()
+	, constraint_density()
 { }
 
 
@@ -51,9 +53,11 @@ ParsedArguments::ParsedArguments(int argc_int, char const** argv)
 	progopts.add_options()
 		("help,h", "print help message")
 		// ("file", po::value(&m_programConfig.m_dataFileName)->required(), "The file to use")
-		("num-threads", po::value(&m_programConfig.m_nThreads), "The maximum nuber of simultaneous threads to use")
-		("width", po::value(&m_programConfig.width), "width")
-		("height", po::value(&m_programConfig.height), "height")
+		// ("num-threads", po::value(&m_programConfig.m_nThreads), "The maximum nuber of simultaneous threads to use")
+		("random-problem,r", po::bool_switch(&m_programConfig.use_random_problem), "Generate a random problem")
+		("num-variables", po::value(&m_programConfig.num_variables), "Number of variables in random problem")
+		("num-constraints", po::value(&m_programConfig.num_constraints), "Number of constraints in random problem")
+		("constraint-density", po::value(&m_programConfig.constraint_density), "Chance that a given variable in included in a constraint")
 	;
 
 	po::options_description allopts;

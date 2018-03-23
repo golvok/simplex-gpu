@@ -24,9 +24,17 @@ int main(int argc, char const** argv) {
 }
 
 int program_main(const ProgramConfig& config) {
-	using simplex::make_small_sample_problem;
 
-	const auto& problem = make_small_sample_problem();
+	const auto& problem = [&]() {
+		if (config.use_random_problem) {
+			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
+			rps.density = *config.constraint_density;
+			return generate_random_problem(rps);
+		} else {
+			return simplex::make_small_sample_problem();
+		}
+	}();
+
 	auto result = gpu_cpu_algo_from_paper(problem);
 	(void) result;
 
