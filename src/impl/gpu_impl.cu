@@ -10,17 +10,17 @@ __global__ void kernel4(double* SimplexTableau, int width, const double* columnK
 namespace simplex {
 namespace gpu {
 
-Tableau<double> create_tableau(const Problem& problem_stmt) {
-	(void)problem_stmt;
+// Tableau<double> create_tableau(const Problem& problem_stmt) {
+// 	(void)problem_stmt;
 
-	Tableau<double> result (
-		0,
-		4,
-		5
-	);
+// 	Tableau<double> result (
+// 		0,
+// 		4,
+// 		5
+// 	);
 
-	return result;
-}
+// 	return result;
+// }
 
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	ThetaValuesAndEnteringColumn<double> result (

@@ -24,13 +24,10 @@ int main(int argc, char const** argv) {
 }
 
 int program_main(const ProgramConfig& config) {
-	using namespace simplex;
-	using namespace simplex::cpu;
+	using simplex::make_small_sample_problem;
 
-	dout(DL::INFO) << config.getWidth();
-
-	Problem problem;
-	auto result = algo_from_paper(problem);
+	const auto& problem = make_small_sample_problem();
+	auto result = cpu_only_algo_from_paper(problem);
 	(void) result;
 
 	return 0;

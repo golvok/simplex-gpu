@@ -4,12 +4,19 @@
 #include <util/logging.hpp>
 
 namespace simplex{
-namespace cpu {
 
 boost::variant<
 	Assignments,
 	TableauErrors
-> algo_from_paper(const Problem& problem) {
+> cpu_only_algo_from_paper(const Problem& problem) {
+	using cpu::create_tableau;
+	using cpu::find_entering_variable;
+	using cpu::get_theta_values_and_entering_column;
+	using cpu::find_leaving_variable;
+	using cpu::update_leaving_row;
+	using cpu::update_rest_of_basis;
+	using cpu::update_entering_column;
+
 	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (CPU)");
 	auto tableau = create_tableau(problem);
 	int iteration_num = 1;
@@ -57,5 +64,4 @@ boost::variant<
 	return Assignments{};
 }
 
-} // end namespace cpu
 } // end namespace simplex

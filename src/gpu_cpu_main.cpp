@@ -24,10 +24,9 @@ int main(int argc, char const** argv) {
 }
 
 int program_main(const ProgramConfig& config) {
-	using simplex::Problem;
-	using simplex::gpu_cpu_algo_from_paper;
+	using simplex::make_small_sample_problem;
 
-	Problem problem;
+	const auto& problem = make_small_sample_problem();
 	auto result = gpu_cpu_algo_from_paper(problem);
 	(void) result;
 

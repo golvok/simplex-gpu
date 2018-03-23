@@ -11,54 +11,39 @@ namespace simplex {
 namespace cpu {
 
 Tableau<double> create_tableau(const Problem& problem_stmt) {
-	/* A' \in R^mXn, c' \in R^n
-	 * max c'x' s.t. A'x' \leq b' && x' \geq 0
-	 * ===
-	 * A  = (A' I) \in R^mX(n+m), c = (c', 0, ...) \in R^(n+m)
-	 * max cx s.t. Ax = b && x \geq 0
-	 *   def: A = (B, N), B \in R^mXm, B is "basic matrix", N nonbasic
-	 *  note: wikipedia's \lambda = (B^T)^-1 c_B
-	 *                    and s_N = c_N - N^T \lambda = c_N - N^T (B^T)^-1 c_b
-	 * steps:
-	 *   use formulae from paper to compute 1st column and rest-of-tableau sections
-	 *     - will have to use matrix library - involves inverting matrices.
-	 *     -
-	 */
-
 	const auto indent = dout(DL::DBG1).indentWithTitle("create_tableau");
-	(void)problem_stmt;
 
-	const long num_constraints = 2;
-	const long num_variables = 3;
+	const auto num_constraints = problem_stmt.num_constraints();
+	const auto num_variables = problem_stmt.num_variables();
 
-	Eigen::VectorXd constraint_consts(2); constraint_consts <<
-		// 6,9 
-		10, 15
-	;
+	dout(DL::DBG1) << "num_variables = " << num_variables << "\nnum_constraints = " << num_constraints << '\n';
 
-	Eigen::MatrixXd basis(num_constraints,num_constraints); basis <<
-		// 1, 2,
-		3, 2,
-		// 2, 1 
-		2, 5
-	;
+	Eigen::MatrixXd constraint_matrix(num_constraints + 1, num_variables + 1);
 
-	Eigen::RowVectorXd basic_coeff(num_constraints); basic_coeff <<
-		// 2, 3
-		2, 3
-	;
+	{int constr_count = 0;
+	for (const auto& constr : problem_stmt.constraints()) {
+		auto current_cm_row = constraint_matrix.row(constr_count + 1);
 
-	Eigen::MatrixXd nonbasics(num_constraints,num_variables); nonbasics <<
-		// 1, 0,
-		1, 1, 0,
-		// 0, 1 
-		3, 0, 1
-	;
+		current_cm_row(0) = constr.m_rhs;
+		for (const auto& varid_and_val : constr.m_coeffs) {
+			current_cm_row(varid_and_val.first.getValue() + 1) = varid_and_val.second;
+		}
 
-	Eigen::RowVectorXd nonbasics_coeff(num_variables); nonbasics_coeff <<
-		// 0, 0
-		4, 0, 0
-	;
+		constr_count += 1;
+	}}
+
+	{auto objective_coeffs = constraint_matrix.row(0);
+	for (const auto& var_and_info : problem_stmt.variables()) {
+		objective_coeffs(var_and_info.first.getValue() + 1) = var_and_info.second.m_coeff;
+	}}
+
+	dout(DL::DBG3) << "constraint matrix\n" << constraint_matrix << '\n';
+
+	const auto& constraint_consts = constraint_matrix.leftCols<1>().segment(1, num_constraints);
+	const auto& basis = Eigen::MatrixXd::Identity(num_constraints,num_constraints);
+	const auto& basic_coeff = Eigen::RowVectorXd::Zero(num_constraints);
+	const auto& nonbasics = constraint_matrix.bottomRightCorner(num_constraints, num_variables);
+	const auto& nonbasics_coeff = constraint_matrix.topRows<1>().segment(1, num_variables);
 
 	const auto& inv_basis = basis.inverse();
 	const auto& inv_basis_times_nonbasis = inv_basis*nonbasics;

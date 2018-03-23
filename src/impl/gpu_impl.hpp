@@ -1,7 +1,7 @@
 #ifndef IMLP__GPU_IMPL_H
 #define IMLP__GPU_IMPL_H
 
-#include <datastructures/problem.hpp>
+// #include <datastructures/problem.hpp>
 #include <datastructures/tableau.hpp>
 #include <impl/impl_common.hpp>
 #include <util/primitive_structures.hpp>
