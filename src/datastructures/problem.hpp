@@ -40,6 +40,10 @@ public:
 		m_variables.at(var).m_coeff = coeff;
 	}
 
+	bool has_variable(VariableID var) {
+		return m_variables.find(var) != end(m_variables);
+	}
+
 private:
 	struct VariableProperties {
 		struct hasher { std::size_t operator()(const VariableProperties& vp) const { return std::hash<FloatType>()(vp.m_coeff); } };
@@ -65,7 +69,23 @@ class Assignments {
 
 };
 
-Problem generate_random_problem(int num_variables, int num_constraints, double density = 0.8);
+class RandomProblemSpecification {
+public:
+	RandomProblemSpecification(int num_variables, int num_constraints)
+		: num_variables(num_variables)
+		, num_constraints(num_constraints)
+	{ }
+
+	int num_variables;
+	int num_constraints;
+
+	Problem::FloatType density = 0.8;
+	std::pair<Problem::FloatType, Problem::FloatType> constr_coeff_range     = {-100.0, 100.0};
+	std::pair<Problem::FloatType, Problem::FloatType> constr_rhs_coeff_range = {-100.0, 100.0};
+	std::pair<Problem::FloatType, Problem::FloatType> objfunc_coeff_range    = {-100.0, 100.0};
+};
+
+Problem generate_random_problem(const RandomProblemSpecification& prob_spec);
 
 Problem make_small_sample_problem();
 

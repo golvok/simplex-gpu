@@ -1,9 +1,39 @@
 #include "problem.hpp"
 
+#include <random>
+
 namespace simplex {
 
-Problem generate_random_problem(int num_variables, int num_constraints, double density) {
+Problem generate_random_problem(const RandomProblemSpecification& prob_spec) {
 	Problem p;
+
+	std::mt19937 rgen{std::random_device()()};
+	std::uniform_real_distribution<> random_chance_dist          (   0.0,   1.0);
+	std::uniform_real_distribution<> random_constr_coeff_dist    (prob_spec.constr_coeff_range.first,     prob_spec.constr_coeff_range.second);
+	std::uniform_real_distribution<> random_constr_rhs_coeff_dist(prob_spec.constr_rhs_coeff_range.first, prob_spec.constr_rhs_coeff_range.second);
+	std::uniform_real_distribution<> random_objfunc_coeff_dist   (prob_spec.objfunc_coeff_range.first,    prob_spec.objfunc_coeff_range.second);
+	const auto random_chance            = [&]() { return random_chance_dist          (rgen); };
+	const auto random_constr_coeff      = [&]() { return random_constr_coeff_dist    (rgen); };
+	const auto random_constr_rhs_coeff  = [&]() { return random_constr_rhs_coeff_dist(rgen); };
+	const auto random_objfunc_coeff     = [&]() { return random_objfunc_coeff_dist   (rgen); };
+
+	std::vector<std::pair<VariableID, Problem::FloatType>> constraint;
+	for (int iconstr = 0; iconstr < prob_spec.num_constraints; ++iconstr) {
+		constraint.clear();
+		for (int ivar = 0; ivar < prob_spec.num_variables; ++ivar) {
+			if (random_chance() < prob_spec.density) {
+				constraint.emplace_back(util::make_id<VariableID>(ivar), random_constr_coeff());
+			}
+		}
+		p.add_constraint(constraint, random_constr_rhs_coeff());
+	}
+
+	for (int ivar = 0; ivar < prob_spec.num_variables; ++ivar) {
+		const auto var = util::make_id<VariableID>(ivar);
+		if (p.has_variable(var)) {
+			p.set_cost(var, random_objfunc_coeff());
+		}
+	}
 
 	return p;
 }
