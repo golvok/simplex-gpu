@@ -20,14 +20,14 @@ public:
 	const FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col) const { return m_data[indexof(row,col)]; }
 	      FloatType& at(std::ptrdiff_t row, std::ptrdiff_t col)       { return m_data[indexof(row,col)]; }
 
-	const FloatType& at(std::ptrdiff_t row, VariableID col) const { return at(row, col.getValue()); }
-	      FloatType& at(std::ptrdiff_t row, VariableID col)       { return at(row, col.getValue()); }
+	const FloatType& at(std::ptrdiff_t row, VariableIndex col) const { return at(row, col.getValue()); }
+	      FloatType& at(std::ptrdiff_t row, VariableIndex col)       { return at(row, col.getValue()); }
 
-	const FloatType& at(VariableID row, std::ptrdiff_t col) const { return at(row.getValue(), col); }
-	      FloatType& at(VariableID row, std::ptrdiff_t col)       { return at(row.getValue(), col); }
+	const FloatType& at(VariableIndex row, std::ptrdiff_t col) const { return at(row.getValue(), col); }
+	      FloatType& at(VariableIndex row, std::ptrdiff_t col)       { return at(row.getValue(), col); }
 
-	const FloatType& at(VariableID row, VariableID col) const { return at(row.getValue(), col.getValue()); }
-	      FloatType& at(VariableID row, VariableID col)       { return at(row.getValue(), col.getValue()); }
+	const FloatType& at(VariableIndex row, VariableIndex col) const { return at(row.getValue(), col.getValue()); }
+	      FloatType& at(VariableIndex row, VariableIndex col)       { return at(row.getValue(), col.getValue()); }
 
 	const FloatType& cost() const { return at(0,0); }
 

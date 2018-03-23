@@ -22,7 +22,7 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	return result;
 }
 
-ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableID entering) {
+ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	ThetaValuesAndEnteringColumn<double> result (
 		tab.height()
 	);
@@ -42,16 +42,16 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	return result;
 }
 
-VariableID find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
+VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
 	// double lowest_theta_value = std::numeric_limits<double>::max();
-	VariableID result;
+	VariableIndex result;
 
 	// for (int irow = 1; irow < (int)tvals_and_centering.theta_values.size(); ++irow) {
 	// 	const auto& theta_val = tvals_and_centering.theta_values.at((std::size_t)irow);
 	// 	const auto& tab_val = tvals_and_centering.entering_column.at((std::size_t)irow);
 	// 	if (tab_val > 0 && (!result || theta_val < lowest_theta_value)) {
 	// 		lowest_theta_value = theta_val;
-	// 		result = util::make_id<VariableID>(irow);
+	// 		result = util::make_id<VariableIndex>(irow);
 	// 	}
 	// }
 
@@ -76,7 +76,7 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
-void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableID leaving) {
+void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
 	// for (int irow = 0; irow < tab.height(); ++irow) {
 	// 	if (irow == leaving.getValue()) { continue; }
 	// 	const auto& entering_col_val = entering_column.at((std::size_t)irow);

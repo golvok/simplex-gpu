@@ -10,19 +10,19 @@
 
 namespace simplex {
 
-struct VariableIDTag { static const int DEFAULT_VALUE = -1; };
-typedef util::ID<int, VariableIDTag> VariableID;
+struct VariableIndexTag { static const int DEFAULT_VALUE = -1; };
+typedef util::ID<int, VariableIndexTag> VariableIndex;
 
 #ifndef __CUDACC__
-inline std::ostream& operator<<(std::ostream& os, const VariableID& id) {
+inline std::ostream& operator<<(std::ostream& os, const VariableIndex& id) {
 	os << "var" << id.getValue();
 	return os;
 }
 #endif
 
 struct VariablePair {
-	VariableID entering;
-	VariableID leaving;
+	VariableIndex entering;
+	VariableIndex leaving;
 };
 
 } // end namespace simplex

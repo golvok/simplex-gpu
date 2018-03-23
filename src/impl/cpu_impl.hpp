@@ -31,16 +31,16 @@ struct ThetaValuesAndEnteringColumn {
 Tableau<double> create_tableau(const Problem& problem_stmt);
 
 // find smallest also negative value in the first row
-boost::optional<VariableID> find_entering_variable(const Tableau<double>& tab);
+boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab);
 
-ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableID entering);
+ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
-VariableID find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
+VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
 
 #if __cplusplus >= 201103L
 Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering);
 
-Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableID leaving);
+Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableIndex leaving);
 
 Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering);
 #endif

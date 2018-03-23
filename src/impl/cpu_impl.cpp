@@ -100,16 +100,16 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	return result;
 }
 
-boost::optional<VariableID> find_entering_variable(const Tableau<double>& tab) {
+boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("find_entering_variable");
 	double lowest_value = 0.0;
-	boost::optional<VariableID> result;
+	boost::optional<VariableIndex> result;
 
 	for (int icol = 1; icol < tab.width(); ++icol) {
 		const auto& val = tab.at(0, icol);
 		if (val < lowest_value) {
 			lowest_value = val;
-			result = util::make_id<VariableID>(icol);
+			result = util::make_id<VariableIndex>(icol);
 		}
 	}
 
@@ -122,7 +122,7 @@ boost::optional<VariableID> find_entering_variable(const Tableau<double>& tab) {
 	return result;
 }
 
-ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableID entering) {
+ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("get_theta_values_and_entering_column");
 	ThetaValuesAndEnteringColumn<double> result (
 		tab.height()
@@ -143,18 +143,18 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	return result;
 }
 
-VariableID find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
+VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("find_leaving_variable");
 
 	auto lowest_theta_value = std::numeric_limits<double>::max();
-	boost::optional<VariableID> result;
+	boost::optional<VariableIndex> result;
 
 	for (int irow = 1; irow < (int)tvals_and_centering.theta_values.size(); ++irow) {
 		const auto& theta_val = tvals_and_centering.theta_values.at((std::size_t)irow);
 		const auto& tab_val = tvals_and_centering.entering_column.at((std::size_t)irow);
 		if (tab_val > 0 && (!result || theta_val < lowest_theta_value)) {
 			lowest_theta_value = theta_val;
-			result = util::make_id<VariableID>(irow);
+			result = util::make_id<VariableIndex>(irow);
 		}
 	}
 
@@ -181,7 +181,7 @@ Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<doub
 	return tab;
 }
 
-Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableID leaving) {
+Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableIndex leaving) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("update_rest_of_basis");
 
 	for (int irow = 0; irow < tab.height(); ++irow) {
