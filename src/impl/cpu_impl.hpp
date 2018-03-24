@@ -4,6 +4,7 @@
 #include <datastructures/problem.hpp>
 #include <datastructures/tableau.hpp>
 #include <impl/impl_common.hpp>
+#include <util/print_printable.hpp>
 
 #include <vector>
 
@@ -14,7 +15,7 @@ namespace cpu {
 
 #if __cplusplus >= 201103L
 template<typename FloatType>
-struct ThetaValuesAndEnteringColumn {
+struct ThetaValuesAndEnteringColumn : util::print_printable {
 	std::vector<FloatType> theta_values;
 	std::vector<FloatType> entering_column;
 
@@ -25,6 +26,21 @@ struct ThetaValuesAndEnteringColumn {
 
 	ThetaValuesAndEnteringColumn(const ThetaValuesAndEnteringColumn&) = default;
 	ThetaValuesAndEnteringColumn(ThetaValuesAndEnteringColumn&&) = default;
+	ThetaValuesAndEnteringColumn& operator=(const ThetaValuesAndEnteringColumn&) = default;
+	ThetaValuesAndEnteringColumn& operator=(ThetaValuesAndEnteringColumn&&) = default;
+
+	template<typename STREAM>
+	void print(STREAM& os) const {
+		os << "{tv = {";
+		for (const auto& tv : theta_values) {
+			os << tv << ", ";
+		}
+		os << "}, ec = {";
+		for (const auto& ecv : entering_column) {
+			os << ecv << ", ";
+		}
+		os << "}}";
+	}
 };
 #endif
 
