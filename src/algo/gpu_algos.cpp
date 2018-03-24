@@ -23,7 +23,7 @@ boost::variant<
 	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (CPU)");
 
 	auto cpu_tableau = create_tableau(problem);
-	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.width(), cpu_tableau.height());
+	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.height(), cpu_tableau.width());
 
 	auto gpu_tv_and_centering = gpu::ThetaValuesAndEnteringColumn<double>(cpu_tableau.height());
 
@@ -56,14 +56,27 @@ boost::variant<
 			find_leaving_variable(cpu_tv_and_centering),
 		};
 
+		printf("cpu_tv_and_centering column(2): %f\n", cpu_tv_and_centering.entering_column.at(2));
+
 		cudaMemcpy(gpu_tv_and_centering.entering_column.data(), cpu_tv_and_centering.entering_column.data(), (std::size_t)gpu_tv_and_centering.entering_column.data_size(), cudaMemcpyHostToDevice);
 		cudaMemcpy(gpu_tv_and_centering.theta_values.data(), cpu_tv_and_centering.theta_values.data(), (std::size_t)gpu_tv_and_centering.theta_values.data_size(), cudaMemcpyHostToDevice);
+
+		copy_tableau_gpu_to_cpu();
+		{const auto indent = dout(DL::INFO).indentWithTitle("update_leaving_row before");
+			dout(DL::INFO) << cpu_tableau << '\n';
+		}
 
 		update_leaving_row( // k2
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
 			entering_and_leaving
 		),
+
+		copy_tableau_gpu_to_cpu();
+		{const auto indent = dout(DL::INFO).indentWithTitle("update_leaving_row after");
+			dout(DL::INFO) << cpu_tableau << '\n';
+		}
+
 		update_rest_of_basis( // k3
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
@@ -76,6 +89,7 @@ boost::variant<
 		);
 
 		iteration_num += 1;
+		if (iteration_num == 3)	break;
 	}
 
 	copy_tableau_gpu_to_cpu();

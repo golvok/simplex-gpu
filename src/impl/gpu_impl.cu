@@ -1,4 +1,5 @@
 #include "gpu_impl.hpp"
+#include <cstdio>
 
 // #include <util/utils.hpp>
 
@@ -71,8 +72,8 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 	// 	tab.at(leaving_and_entering.leaving, icol) /= denom;
 	// }
 
-	int numBlocks = 32;
-	int threadsPerBlock = 32;
+	int numBlocks = 1;
+	int threadsPerBlock = tab.width();
 	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
@@ -87,8 +88,8 @@ void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<doubl
 	// }
 
 	// std::cout << "tableau after:\n" << tab << '\n';
-	int numBlocks = 32;
-	int threadsPerBlock = 32;
+	int numBlocks = 1;
+	int threadsPerBlock = tab.width();
 
 	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving.getValue());
 }
@@ -105,8 +106,8 @@ void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<dou
 	// }
 
 	// std::cout << "tableau after:\n" << tab << '\n';
-	int numBlocks = 32;
-	int threadsPerBlock = 32;
+	int numBlocks = 1;
+	int threadsPerBlock = tab.width();
 
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
 }
@@ -129,9 +130,16 @@ __global__ void kernel2(double* SimplexTableau, int width, const double* columnK
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	__shared__ double w;
 
-	if (threadIdx.x == 0) w = columnK[r];
+	if (threadIdx.x == 0) {
+		w = columnK[r];
+		// printf("index: %d\n", r);
+		// printf("denom: %f\n", w);
+		// printf("width: %d\n", width);
+	}
 	__syncthreads();
 
+
+	// printf("idx: %d %f\n", idx, SimplexTableau[r*width + idx]);
 	SimplexTableau[r*width + idx] = SimplexTableau[r*width + idx]/w;
 }
 

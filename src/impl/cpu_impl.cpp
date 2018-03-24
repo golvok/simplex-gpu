@@ -153,14 +153,19 @@ VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& 
 }
 
 Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering) {
+	dout(DL::LINDA) << "update_leaving_row before:\n" << tab << '\n';
+
 	const auto indent = dout(DL::DBG1).indentWithTitle("update_leaving_row");
 
 	auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
+	dout(DL::LINDA) << "index: " << (std::size_t)leaving_and_entering.leaving.getValue() << '\n';
+	dout(DL::LINDA) << "denom: " << denom << '\n';
 
 	for (int icol = 0; icol < tab.width(); ++icol) {
 		tab.at(leaving_and_entering.leaving, icol) /= denom;
 	}
 
+	dout(DL::LINDA) << "update_leaving_row after:\n" << tab << '\n';
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;

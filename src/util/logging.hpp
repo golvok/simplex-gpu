@@ -30,6 +30,7 @@ namespace DebugLevel {
 		DBG2, // debug level 2
 		DBG3, // debug level 3
 		DBG4, // lowest level debug
+		LINDA, // best level debug
 
 		DATA_READ1, // reading of data
 

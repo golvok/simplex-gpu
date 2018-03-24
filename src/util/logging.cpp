@@ -27,6 +27,7 @@ namespace DebugLevel {
 	 */
 	std::vector<std::vector<Level>> enable_chains {
 		{ DBG4, DBG3, DBG2, DBG1, },
+		{ LINDA, },
 	};
 
 	std::vector<Level> getAllShouldBeEnabled(Level l) {
@@ -50,6 +51,7 @@ namespace DebugLevel {
 		{ DBG2,  "DBG2" },
 		{ DBG3,  "DBG3" },
 		{ DBG4,  "DBG4" },
+		{ LINDA,  "LINDA" },
 
 		{ DATA_READ1, "DATA_READ1" },
 	};
