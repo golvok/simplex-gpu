@@ -20,8 +20,8 @@ struct ThetaValuesAndEnteringColumn {
 		: theta_values(NULL, height)
 		, entering_column(NULL, height)
 	{
-		cudaMalloc(&theta_values.data(), static_cast<std::size_t>(theta_values.size()));
-		cudaMalloc(&entering_column.data(), static_cast<std::size_t>(entering_column.size()));
+		cudaMalloc(&theta_values.data(), static_cast<std::size_t>(theta_values.data_size()));
+		cudaMalloc(&entering_column.data(), static_cast<std::size_t>(entering_column.data_size()));
 	}
 
 	// ThetaValuesAndEnteringColumn(const ThetaValuesAndEnteringColumn&) = default;
