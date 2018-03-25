@@ -29,6 +29,7 @@ int program_main(const ProgramConfig& config) {
 		if (config.use_random_problem) {
 			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
 			rps.density = *config.constraint_density;
+			rps.random_seed = config.random_problem_seed;
 			return generate_random_problem(rps);
 		} else {
 			return simplex::make_small_sample_problem();

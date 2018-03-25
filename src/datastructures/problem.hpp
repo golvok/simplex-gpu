@@ -79,6 +79,8 @@ public:
 	int num_variables;
 	int num_constraints;
 
+	boost::optional<unsigned long> random_seed = {};
+
 	Problem::FloatType density = 0.8;
 	std::pair<Problem::FloatType, Problem::FloatType> constr_coeff_range     = {-100.0, 100.0};
 	std::pair<Problem::FloatType, Problem::FloatType> constr_rhs_coeff_range = {-100.0, 100.0};

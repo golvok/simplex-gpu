@@ -41,6 +41,7 @@ struct ProgramConfig {
 	int m_nThreads;
 
 	bool use_random_problem;
+	boost::optional<unsigned long> random_problem_seed;
 	boost::optional<int> num_variables;
 	boost::optional<int> num_constraints;
 	boost::optional<double> constraint_density;
