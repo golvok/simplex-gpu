@@ -51,7 +51,7 @@ boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab
 
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
-VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
+boost::optional<VariableIndex> find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
 
 #if __cplusplus >= 201103L
 Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering);

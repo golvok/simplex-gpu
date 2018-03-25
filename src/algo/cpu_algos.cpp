@@ -28,14 +28,22 @@ boost::variant<
 		const auto entering_var = find_entering_variable(tableau);
 
 		if (!entering_var) {
+			dout(DL::INFO) << "Solution reached!\n";
 			break;
 		}
 		
 		const auto tv_and_centering = get_theta_values_and_entering_column(tableau, *entering_var);
 		
+		const auto leaving_var = find_leaving_variable(tv_and_centering);
+
+		if (!leaving_var) {
+			dout(DL::INFO) << "Problem is unbounded!\n";
+			break;
+		}
+
 		VariablePair entering_and_leaving = {
 			*entering_var,
-			find_leaving_variable(tv_and_centering),
+			*leaving_var,
 		};
 
 		tableau = update_entering_column(

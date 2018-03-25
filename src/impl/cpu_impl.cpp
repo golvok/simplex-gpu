@@ -128,7 +128,7 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	return result;
 }
 
-VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
+boost::optional<VariableIndex> find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("find_leaving_variable");
 
 	auto lowest_theta_value = std::numeric_limits<double>::max();
@@ -149,7 +149,7 @@ VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& 
 		dout(DL::DBG1) << "did not find a leaving variable\n";
 	}
 
-	return *result;
+	return result;
 }
 
 Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering) {
