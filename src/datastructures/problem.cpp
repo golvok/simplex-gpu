@@ -23,6 +23,8 @@ Problem generate_random_problem(const RandomProblemSpecification& prob_spec) {
 		for (int ivar = 0; ivar < prob_spec.num_variables; ++ivar) {
 			if (random_chance() < prob_spec.density) {
 				constraint.emplace_back(util::make_id<VariableID>(ivar), random_constr_coeff());
+			} else {
+				constraint.emplace_back(util::make_id<VariableID>(ivar), 0);
 			}
 		}
 		p.add_constraint(constraint, random_constr_rhs_coeff());
