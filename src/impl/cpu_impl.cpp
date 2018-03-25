@@ -174,15 +174,18 @@ Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<doub
 Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableIndex leaving) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("update_rest_of_basis");
 
+	dout(DL::LINDA) << "update_rest_of_basis before:\n" << tab << '\n';
 	for (int irow = 0; irow < tab.height(); ++irow) {
 		if (irow == leaving.getValue()) { continue; }
 		const auto& entering_col_val = entering_column.at((std::size_t)irow);
 
 		for (int icol = 0; icol < tab.width(); ++icol) {
+			dout(DL::LINDA) << "entering_col_val: " << entering_col_val << " tab.at(leaving, icol): " << tab.at(leaving, icol) << '\n';
 			tab.at(irow, icol) -= tab.at(leaving, icol) * entering_col_val;
 		}
 	}
 
+	dout(DL::LINDA) << "update_rest_of_basis after:\n" << tab << '\n';
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;

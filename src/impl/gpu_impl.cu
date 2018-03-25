@@ -5,7 +5,7 @@
 
 __global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k);
 __global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r);
-__global__ void kernel3(double* SimplexTableau, int width, const double* columnK, int r);
+__global__ void kernel3(double* SimplexTableau, int width, int height, const double* columnK, int r);
 __global__ void kernel4(double* SimplexTableau, int width, const double* columnK, int k, int r);
 
 namespace simplex {
@@ -66,11 +66,6 @@ VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& 
 }
 
 void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
-	// auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
-
-	// for (int icol = 0; icol < tab.width(); ++icol) {
-	// 	tab.at(leaving_and_entering.leaving, icol) /= denom;
-	// }
 
 	int numBlocks = 1;
 	int threadsPerBlock = tab.width();
@@ -78,36 +73,19 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 }
 
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
-	// for (int irow = 0; irow < tab.height(); ++irow) {
-	// 	if (irow == leaving.getValue()) { continue; }
-	// 	const auto& entering_col_val = entering_column.at((std::size_t)irow);
 
-	// 	for (int icol = 0; icol < tab.width(); ++icol) {
-	// 		tab.at(irow, icol) -= tab.at(leaving, icol) * entering_col_val;
-	// 	}
-	// }
+	dim3 numBlocks(1, 1); 
+	dim3 threadsPerBlock(tab.width(), tab.height());
 
-	// std::cout << "tableau after:\n" << tab << '\n';
-	int numBlocks = 1;
-	int threadsPerBlock = tab.width();
+	// printf("width: %d height %d\n", tab.width(), tab.height());
 
-	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving.getValue());
+	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), tab.height(), entering_column.data(), leaving.getValue());
 }
 
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
-	// auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
 
-	// for (int irow = 0; irow < tab.height(); ++irow) {
-	// 	if (irow == leaving_and_entering.leaving.getValue()) {
-	// 		tab.at(irow, leaving_and_entering.entering) = 1/denom;
-	// 	} else {
-	// 		tab.at(irow, leaving_and_entering.entering) = - entering_column.at((std::size_t)irow)/denom;
-	// 	}
-	// }
-
-	// std::cout << "tableau after:\n" << tab << '\n';
-	int numBlocks = 1;
-	int threadsPerBlock = tab.width();
+	int numBlocks = 3;
+	int threadsPerBlock = tab.height();
 
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
 }
@@ -143,19 +121,22 @@ __global__ void kernel2(double* SimplexTableau, int width, const double* columnK
 	SimplexTableau[r*width + idx] = SimplexTableau[r*width + idx]/w;
 }
 
-__global__ void kernel3(double* SimplexTableau, int width, const double* columnK, int r) {
+__global__ void kernel3(double* SimplexTableau, int width, int height, const double* columnK, int r) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	int jdx = blockIdx.y * blockDim.y + threadIdx.y;
-	__shared__ double w[16];
+	__shared__ double w[32]; // just a number that's big enough
+
 	/*Get the column of entering index k in shared memory */
-	if(threadIdx.y == 0 && threadIdx.x < 16)
+	if(threadIdx.y == 0 && threadIdx.x < height)
 	{
 		w[threadIdx.x] = columnK[blockIdx.y * blockDim.y+threadIdx.x];
+		printf("columnK[blockIdx.y * blockDim.y+threadIdx.x] %f\n", columnK[blockIdx.y * blockDim.y+threadIdx.x]);
 	}
 	__syncthreads();
 	/*Update the basis except the line r*/
 	if(jdx == r) return;
-	SimplexTableau[jdx*width + idx] = SimplexTableau[jdx*width + idx] - w[threadIdx.y] * SimplexTableau[r*width + idx];
+	printf("w[threadIdx.y]: %f SimplexTableau[r*width + idx]: %f \n", w[threadIdx.y], SimplexTableau[r*width + idx]);
+	SimplexTableau[jdx*width + idx] -= w[threadIdx.y] * SimplexTableau[r*width + idx];
 }
 
 __global__ void kernel4(double* SimplexTableau, int width, const double* columnK, int k, int r) {

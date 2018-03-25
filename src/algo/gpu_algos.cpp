@@ -20,7 +20,7 @@ boost::variant<
 	using gpu::update_rest_of_basis;
 	using gpu::update_entering_column;
 
-	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (CPU)");
+	const auto indent = dout(DL::INFO).indentWithTitle("Algorithm from the Paper (GPU)");
 
 	auto cpu_tableau = create_tableau(problem);
 	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.height(), cpu_tableau.width());
@@ -82,6 +82,12 @@ boost::variant<
 			gpu_tv_and_centering.entering_column,
 			entering_and_leaving.leaving
 		),
+
+		copy_tableau_gpu_to_cpu();
+		{const auto indent = dout(DL::INFO).indentWithTitle("update_rest_of_basis after");
+			dout(DL::INFO) << cpu_tableau << '\n';
+		}
+
 		update_entering_column( //k4
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
