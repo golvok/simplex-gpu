@@ -72,10 +72,13 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
+#define K3_BLOCK_WIDTH ((int)8)
+#define K3_BLOCK_HEIGHT ((int)4)
+
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
 
-	dim3 numBlocks(1, 1); 
-	dim3 threadsPerBlock(tab.width(), tab.height());
+	dim3 numBlocks(tab.width()/K3_BLOCK_WIDTH, tab.height()/K3_BLOCK_HEIGHT);
+	dim3 threadsPerBlock(K3_BLOCK_WIDTH, K3_BLOCK_HEIGHT);
 
 	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), tab.height(), entering_column.data(), leaving.getValue());
 }
@@ -122,13 +125,14 @@ __global__ void kernel2(double* SimplexTableau, int width, const double* columnK
 __global__ void kernel3(double* SimplexTableau, int width, int height, const double* columnK, int r) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	int jdx = blockIdx.y * blockDim.y + threadIdx.y;
-	__shared__ double w[32]; // just a number that's big enough
+	__shared__ double w[K3_BLOCK_WIDTH];
 
 	/*Get the column of entering index k in shared memory */
-	if(threadIdx.y == 0 && threadIdx.x < width)
+	// The K3_BLOCK_WIDTH test is redundant??
+	if(threadIdx.y == 0 && threadIdx.x < K3_BLOCK_WIDTH)
 	{
 		w[threadIdx.x] = columnK[blockIdx.y * blockDim.y+threadIdx.x];
-		// printf("columnK[blockIdx.y * blockDim.y+threadIdx.x] %f\n", columnK[blockIdx.y * blockDim.y+threadIdx.x]);
+		// printf("columnK[%d*%d + %d = %d] %f\n", blockIdx.y, blockDim.y, threadIdx.x, blockIdx.y * blockDim.y+threadIdx.x, columnK[blockIdx.y * blockDim.y+threadIdx.x]);
 	}
 	__syncthreads();
 	/*Update the basis except the line r*/
