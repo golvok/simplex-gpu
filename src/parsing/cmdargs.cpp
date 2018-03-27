@@ -32,6 +32,7 @@ ProgramConfig::ProgramConfig()
 	, num_variables()
 	, num_constraints()
 	, constraint_density()
+	, force_problem_padding(false)
 { }
 
 
@@ -60,6 +61,7 @@ ParsedArguments::ParsedArguments(int argc_int, char const** argv)
 		("num-variables", po::value(&m_programConfig.num_variables), "Number of variables in random problem")
 		("num-constraints", po::value(&m_programConfig.num_constraints), "Number of constraints in random problem")
 		("constraint-density", po::value(&m_programConfig.constraint_density), "Chance that a given variable in included in a constraint")
+		("force-padding", po::bool_switch(&m_programConfig.force_problem_padding), "Force padding the problem with zeroes to match GPU implementation constraints")
 	;
 
 	po::options_description allopts;

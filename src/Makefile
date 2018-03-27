@@ -90,7 +90,7 @@ DIRS= \
 
 # define executables
 TEST_EXES=
-EXES=$(EXE_DIR)simplex-cpu-only $(GPU_EXE)simplex $(TEST_EXES)
+EXES=$(GPU_EXE)simplex-cpu-only $(GPU_EXE)simplex $(TEST_EXES)
 
 all: $(EXES) test | build_info
 
@@ -101,13 +101,14 @@ build_info:
 	@echo "In build mode ${BUILD_MODE}"
 
 # add more dependencies here:
-$(EXE_DIR)simplex-cpu-only: \
+$(GPU_EXE)simplex-cpu-only: \
 	$(OBJ_DIR)algo/cpu_algos.o \
 	$(OBJ_DIR)datastructures/problem.o \
 	$(OBJ_DIR)impl/cpu_impl.o \
 	$(OBJ_DIR)parsing/cmdargs.o \
 	$(OBJ_DIR)util/logging.o \
 	$(OBJ_DIR)cpu_only_main.o \
+	$(OBJ_DIR)impl/gpu_impl.o \
 
 
 $(GPU_EXE)simplex: \

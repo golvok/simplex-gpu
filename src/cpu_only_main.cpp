@@ -1,6 +1,7 @@
 
-#include <datastructures/tableau.hpp>
 #include <algo/cpu_algos.hpp>
+#include <datastructures/tableau.hpp>
+#include <impl/gpu_impl.hpp>
 #include <parsing/cmdargs.hpp>
 #include <util/logging.hpp>
 
@@ -30,7 +31,16 @@ int program_main(const ProgramConfig& config) {
 			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
 			rps.density = *config.constraint_density;
 			rps.random_seed = config.random_problem_seed;
-			return generate_random_problem(rps);
+			if (config.force_problem_padding) {
+				const auto problem_constraints = simplex::gpu::problem_constraints();
+				return pad_with_zeroes_modulo(
+					generate_random_problem(rps),
+					problem_constraints.height_modulus,
+					problem_constraints.width_modulus
+				);
+			} else {
+				return generate_random_problem(rps);
+			}
 		} else {
 			return simplex::make_small_sample_problem();
 		}
