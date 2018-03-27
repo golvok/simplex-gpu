@@ -11,8 +11,8 @@
 
 namespace simplex {
 
-struct VariableIDTag { static const int DEFAULT_VALUE = -1; };
-typedef util::ID<int, VariableIDTag> VariableID;
+struct VariableIDTag { static const std::ptrdiff_t DEFAULT_VALUE = -1; };
+typedef util::ID<std::ptrdiff_t, VariableIDTag> VariableID;
 
 class Problem {
 public:
