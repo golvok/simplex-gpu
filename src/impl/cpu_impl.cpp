@@ -153,13 +153,12 @@ boost::optional<VariableIndex> find_leaving_variable(const ThetaValuesAndEnterin
 }
 
 Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<double>& entering_column, VariablePair leaving_and_entering) {
-	dout(DL::LINDA) << "update_leaving_row before:\n" << tab << '\n';
 
 	const auto indent = dout(DL::DBG1).indentWithTitle("update_leaving_row");
 
 	auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
-	dout(DL::LINDA) << "index: " << (std::size_t)leaving_and_entering.leaving.getValue() << '\n';
-	dout(DL::LINDA) << "denom: " << denom << '\n';
+	// dout(DL::LINDA) << "index: " << (std::size_t)leaving_and_entering.leaving.getValue() << '\n';
+	// dout(DL::LINDA) << "denom: " << denom << '\n';
 
 	for (int icol = 0; icol < tab.width(); ++icol) {
 		tab.at(leaving_and_entering.leaving, icol) /= denom;
@@ -174,13 +173,12 @@ Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<doub
 Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<double>& entering_column, VariableIndex leaving) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("update_rest_of_basis");
 
-	dout(DL::LINDA) << "update_rest_of_basis before:\n" << tab << '\n';
 	for (int irow = 0; irow < tab.height(); ++irow) {
 		if (irow == leaving.getValue()) { continue; }
 		const auto& entering_col_val = entering_column.at((std::size_t)irow);
 
 		for (int icol = 0; icol < tab.width(); ++icol) {
-			dout(DL::LINDA) << "entering_col_val: " << entering_col_val << " tab.at(leaving, icol): " << tab.at(leaving, icol) << '\n';
+			dout(DL::LINDA) << "entering_col_val: " << entering_col_val << " tab.at(leaving, icol): " << tab.at(leaving, icol) << " leaving: " << leaving << " icol: " << icol << "\n";
 			tab.at(irow, icol) -= tab.at(leaving, icol) * entering_col_val;
 		}
 	}
@@ -196,6 +194,8 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 
 	auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
 
+	printf("index: %d denom: %f\n", leaving_and_entering.leaving.getValue(), denom);
+
 	for (int irow = 0; irow < tab.height(); ++irow) {
 		if (irow == leaving_and_entering.leaving.getValue()) {
 			tab.at(irow, leaving_and_entering.entering) = 1/denom;
@@ -206,6 +206,7 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
+	dout(DL::LINDA) << "update_entering_column after:\n" << tab << '\n';
 	return tab;
 }
 

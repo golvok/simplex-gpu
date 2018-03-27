@@ -77,14 +77,12 @@ void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<doubl
 	dim3 numBlocks(1, 1); 
 	dim3 threadsPerBlock(tab.width(), tab.height());
 
-	// printf("width: %d height %d\n", tab.width(), tab.height());
-
 	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), tab.height(), entering_column.data(), leaving.getValue());
 }
 
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
 
-	int numBlocks = 3;
+	int numBlocks = 1;
 	int threadsPerBlock = tab.height();
 
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
@@ -127,15 +125,15 @@ __global__ void kernel3(double* SimplexTableau, int width, int height, const dou
 	__shared__ double w[32]; // just a number that's big enough
 
 	/*Get the column of entering index k in shared memory */
-	if(threadIdx.y == 0 && threadIdx.x < height)
+	if(threadIdx.y == 0 && threadIdx.x < width)
 	{
 		w[threadIdx.x] = columnK[blockIdx.y * blockDim.y+threadIdx.x];
-		printf("columnK[blockIdx.y * blockDim.y+threadIdx.x] %f\n", columnK[blockIdx.y * blockDim.y+threadIdx.x]);
+		// printf("columnK[blockIdx.y * blockDim.y+threadIdx.x] %f\n", columnK[blockIdx.y * blockDim.y+threadIdx.x]);
 	}
 	__syncthreads();
 	/*Update the basis except the line r*/
 	if(jdx == r) return;
-	printf("w[threadIdx.y]: %f SimplexTableau[r*width + idx]: %f \n", w[threadIdx.y], SimplexTableau[r*width + idx]);
+	printf("w[threadIdx.y]: %f SimplexTableau[r*width + idx]: %f r: %d idx: %d\n", w[threadIdx.y], SimplexTableau[r*width + idx], r, idx);
 	SimplexTableau[jdx*width + idx] -= w[threadIdx.y] * SimplexTableau[r*width + idx];
 }
 
@@ -144,7 +142,10 @@ __global__ void kernel4(double* SimplexTableau, int width, const double* columnK
 	__shared__ double w;
 	/*Get the pivot element : SimplexT ableau[r][k] in the
 	shared memory */
-	if(threadIdx.x == 0) w = columnK[r];
+	if(threadIdx.x == 0){
+		w = columnK[r];
+		printf("r: %d w %f\n", r,w);
+	}
 	__syncthreads();
 	/*Update the column of the entering index k*/
 	SimplexTableau[jdx*width + k] = -columnK[jdx]/w;
