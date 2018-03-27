@@ -65,16 +65,16 @@ VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& 
 	return result;
 }
 
+#define K2_BLOCK_WIDTH ((int)8)
 void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
 
-	int numBlocks = 1;
-	int threadsPerBlock = tab.width();
+	int numBlocks = tab.width()/K2_BLOCK_WIDTH;
+	int threadsPerBlock = K2_BLOCK_WIDTH;
 	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
 #define K3_BLOCK_WIDTH ((int)8)
 #define K3_BLOCK_HEIGHT ((int)4)
-
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
 
 	dim3 numBlocks(tab.width()/K3_BLOCK_WIDTH, tab.height()/K3_BLOCK_HEIGHT);
@@ -83,10 +83,11 @@ void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<doubl
 	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), tab.height(), entering_column.data(), leaving.getValue());
 }
 
+#define K4_BLOCK_HEIGHT ((int)8)
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
 
-	int numBlocks = 1;
-	int threadsPerBlock = tab.height();
+	int numBlocks = tab.height()/K4_BLOCK_HEIGHT;
+	int threadsPerBlock = K4_BLOCK_HEIGHT;
 
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
 }
@@ -137,7 +138,7 @@ __global__ void kernel3(double* SimplexTableau, int width, int height, const dou
 	__syncthreads();
 	/*Update the basis except the line r*/
 	if(jdx == r) return;
-	printf("w[threadIdx.y]: %f SimplexTableau[r*width + idx]: %f r: %d idx: %d\n", w[threadIdx.y], SimplexTableau[r*width + idx], r, idx);
+	// printf("w[threadIdx.y]: %f SimplexTableau[r*width + idx]: %f r: %d idx: %d\n", w[threadIdx.y], SimplexTableau[r*width + idx], r, idx);
 	SimplexTableau[jdx*width + idx] -= w[threadIdx.y] * SimplexTableau[r*width + idx];
 }
 
@@ -148,7 +149,7 @@ __global__ void kernel4(double* SimplexTableau, int width, const double* columnK
 	shared memory */
 	if(threadIdx.x == 0){
 		w = columnK[r];
-		printf("r: %d w %f\n", r,w);
+		// printf("r: %d w %f\n", r,w);
 	}
 	__syncthreads();
 	/*Update the column of the entering index k*/

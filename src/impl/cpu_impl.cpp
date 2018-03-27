@@ -178,7 +178,7 @@ Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<do
 		const auto& entering_col_val = entering_column.at((std::size_t)irow);
 
 		for (int icol = 0; icol < tab.width(); ++icol) {
-			dout(DL::LINDA) << "entering_col_val: " << entering_col_val << " tab.at(leaving, icol): " << tab.at(leaving, icol) << " leaving: " << leaving << " icol: " << icol << "\n";
+			// dout(DL::LINDA) << "entering_col_val: " << entering_col_val << " tab.at(leaving, icol): " << tab.at(leaving, icol) << " leaving: " << leaving << " icol: " << icol << "\n";
 			tab.at(irow, icol) -= tab.at(leaving, icol) * entering_col_val;
 		}
 	}
@@ -194,7 +194,7 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 
 	auto denom = entering_column.at((std::size_t)leaving_and_entering.leaving.getValue());
 
-	printf("index: %d denom: %f\n", leaving_and_entering.leaving.getValue(), denom);
+	// printf("index: %d denom: %f\n", leaving_and_entering.leaving.getValue(), denom);
 
 	for (int irow = 0; irow < tab.height(); ++irow) {
 		if (irow == leaving_and_entering.leaving.getValue()) {
