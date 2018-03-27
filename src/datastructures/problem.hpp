@@ -3,6 +3,7 @@
 
 #include <util/id.hpp>
 #include <util/my_hash.hpp>
+#include <util/print_printable.hpp>
 
 #include <unordered_map>
 #include <vector>
@@ -14,7 +15,7 @@ namespace simplex {
 struct VariableIDTag { static const std::ptrdiff_t DEFAULT_VALUE = -1; };
 typedef util::ID<std::ptrdiff_t, VariableIDTag> VariableID;
 
-class Problem {
+class Problem : public util::print_printable {
 public:
 	using FloatType = double;
 
@@ -42,6 +43,31 @@ public:
 
 	bool has_variable(VariableID var) {
 		return m_variables.find(var) != end(m_variables);
+	}
+
+	/* Prints the file in LP format */
+	template<typename STREAM>
+	void print(STREAM& os) const {
+		const auto& print_term = [&](auto& coeff, auto&& vid) {
+			os << (coeff >= 0 ? "+" : "") << coeff << " x" << vid.getValue() << ' ';
+		};
+
+		os << "Maximize\n\t";
+		for (const auto vid_and_vinf : variables()) {
+			print_term(vid_and_vinf.second.m_coeff, vid_and_vinf.first);
+		}
+
+		os << "\n\nSubject to\n";
+		for (const auto& c : constraints()) {
+			os << '\t';
+			for (const auto vid_and_vinf : c.m_coeffs) {
+				print_term(vid_and_vinf.second, vid_and_vinf.first);
+			}
+			os << "<= " << c.m_rhs << '\n';
+		}
+
+		os << "\nBounds\n";
+		os << "\nEnd";
 	}
 
 private:
