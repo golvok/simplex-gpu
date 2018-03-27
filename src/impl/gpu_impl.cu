@@ -1,7 +1,7 @@
 #include "gpu_impl.hpp"
-#include <cstdio>
 
-// #include <util/utils.hpp>
+#include <cassert>
+#include <cstdio>
 
 __global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k);
 __global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r);
@@ -76,6 +76,8 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 #define K3_BLOCK_WIDTH ((int)8)
 #define K3_BLOCK_HEIGHT ((int)4)
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
+	assert(tab.height() % K3_BLOCK_HEIGHT == 0);
+	assert(tab.width()  % K3_BLOCK_WIDTH  == 0);
 
 	dim3 numBlocks(tab.width()/K3_BLOCK_WIDTH, tab.height()/K3_BLOCK_HEIGHT);
 	dim3 threadsPerBlock(K3_BLOCK_WIDTH, K3_BLOCK_HEIGHT);
@@ -90,6 +92,13 @@ void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<dou
 	int threadsPerBlock = K4_BLOCK_HEIGHT;
 
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
+}
+
+ProblemContraints problem_constraints() {
+	return {
+		K3_BLOCK_HEIGHT,
+		K3_BLOCK_WIDTH,
+	};
 }
 
 } // end namespace simplex

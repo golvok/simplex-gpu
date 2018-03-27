@@ -33,6 +33,11 @@ struct ThetaValuesAndEnteringColumn {
 // find smallest also negative value in the first row
 // boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab);
 
+struct ProblemContraints {
+	std::ptrdiff_t height_modulus;
+	std::ptrdiff_t  width_modulus;
+};
+
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
 VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
@@ -42,6 +47,8 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving);
 
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering);
+
+ProblemContraints problem_constraints();
 
 } // end namespace simplex
 } // end namespace gpu

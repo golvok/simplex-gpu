@@ -91,6 +91,8 @@ Problem generate_random_problem(const RandomProblemSpecification& prob_spec);
 
 Problem make_small_sample_problem();
 
+Problem pad_with_zeroes_modulo(Problem&& p, std::ptrdiff_t height_modulus, std::ptrdiff_t width_modulus);
+
 } // end namespace simplex
 
 #endif /* DATASTRUCTURES__PROBLEM_H */

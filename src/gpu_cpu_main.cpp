@@ -1,5 +1,6 @@
 
 #include <algo/gpu_algos.hpp>
+#include <impl/gpu_impl.hpp>
 #include <datastructures/tableau.hpp>
 #include <parsing/cmdargs.hpp>
 #include <util/logging.hpp>
@@ -27,10 +28,17 @@ int program_main(const ProgramConfig& config) {
 
 	const auto& problem = [&]() {
 		if (config.use_random_problem) {
+			const auto problem_constraints = simplex::gpu::problem_constraints();
+
 			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
 			rps.density = *config.constraint_density;
 			rps.random_seed = config.random_problem_seed;
-			return generate_random_problem(rps);
+
+			return pad_with_zeroes_modulo(
+				generate_random_problem(rps),
+				problem_constraints.height_modulus,
+				problem_constraints.width_modulus
+			);
 		} else {
 			return simplex::make_small_sample_problem();
 		}
