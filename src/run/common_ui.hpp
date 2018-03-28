@@ -2,6 +2,7 @@
 #define PARSING__CMDARGS_H
 
 #include <util/logging.hpp>
+#include <datastructures/problem.hpp>
 
 #include <string>
 
@@ -68,6 +69,13 @@ private:
 ParsedArguments parse(int arc_int, char const** argv);
 
 } // end namespace cmdargs
+
+struct CommonCmdlineData {
+	Problem problem;
+};
+
+CommonCmdlineData common_cmdline_ui(const cmdargs::ProgramConfig& config);
+
 } // end namespace simplex
 
 #endif /* PARSING__CMDARGS_H */

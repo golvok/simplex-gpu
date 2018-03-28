@@ -99,4 +99,31 @@ ParsedArguments parse(int arc_int, char const** argv) {
 }
 
 } // end namespace cmdargs
+
+CommonCmdlineData common_cmdline_ui(const cmdargs::ProgramConfig& config) {
+	auto problem = [&]() {
+		if (config.use_random_problem) {
+			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
+			rps.density = *config.constraint_density;
+			rps.random_seed = config.random_problem_seed;
+			if (config.force_problem_padding) {
+				const auto problem_constraints = simplex::gpu::problem_constraints();
+				return pad_with_zeroes_modulo(
+					generate_random_problem(rps),
+					problem_constraints.height_modulus,
+					problem_constraints.width_modulus
+				);
+			} else {
+				return generate_random_problem(rps);
+			}
+		} else {
+			return simplex::make_small_sample_problem();
+		}
+	}();
+
+	return {
+		problem,
+	};
+}
+
 } // end namespace simplex
