@@ -5,9 +5,12 @@
 namespace simplex {
 
 Problem generate_random_problem(const RandomProblemSpecification& prob_spec) {
-	Problem p;
+	const auto seed = prob_spec.random_seed.value_or(std::random_device()());
+	auto prob_spec_with_seed = prob_spec;
+	prob_spec_with_seed.random_seed = seed;
+	Problem p(prob_spec_with_seed);
 
-	std::mt19937 rgen{ prob_spec.random_seed.value_or(std::random_device()()) };
+	std::mt19937 rgen{seed};
 	std::uniform_real_distribution<> random_chance_dist          (   0.0,   1.0);
 	std::uniform_real_distribution<> random_constr_coeff_dist    (prob_spec.constr_coeff_range.first,     prob_spec.constr_coeff_range.second);
 	std::uniform_real_distribution<> random_constr_rhs_coeff_dist(prob_spec.constr_rhs_coeff_range.first, prob_spec.constr_rhs_coeff_range.second);

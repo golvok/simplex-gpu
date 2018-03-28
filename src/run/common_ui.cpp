@@ -108,6 +108,7 @@ CommonCmdlineData common_cmdline_ui(const cmdargs::ProgramConfig& config) {
 			simplex::RandomProblemSpecification rps(*config.num_variables, *config.num_constraints);
 			rps.density = *config.constraint_density;
 			rps.random_seed = config.random_problem_seed;
+			dout(DL::INFO) << "A random problem was generated with these parameters: " << rps << '\n';
 			if (config.force_problem_padding) {
 				const auto problem_constraints = simplex::gpu::problem_constraints();
 				return pad_with_zeroes_modulo(

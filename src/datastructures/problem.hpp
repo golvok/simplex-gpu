@@ -15,15 +15,54 @@ namespace simplex {
 struct VariableIDTag { static const std::ptrdiff_t DEFAULT_VALUE = -1; };
 typedef util::ID<std::ptrdiff_t, VariableIDTag> VariableID;
 
+class RandomProblemSpecification : public util::print_printable {
+public:
+	using FloatType = double;
+
+	RandomProblemSpecification(int num_variables, int num_constraints)
+		: num_variables(num_variables)
+		, num_constraints(num_constraints)
+	{ }
+
+	template<typename STREAM>
+	void print(STREAM& os) const {
+		os
+			<< "{ num_variables = " << num_variables
+			<< ", num_constraints = " << num_constraints
+			<< ", random_seed = "; if (random_seed) os << *random_seed; else os << "none"; os
+			<< ", density = " << density
+			<< ", constr_coeff_range = {" << constr_coeff_range.first << " - " << constr_coeff_range.second << "}"
+			<< ", constr_rhs_coeff_range = {" << constr_rhs_coeff_range.first << " - " << constr_rhs_coeff_range.second << "}"
+			<< ", objfunc_coeff_range = {" << objfunc_coeff_range.first << " - " << objfunc_coeff_range.second << "}"
+			<< " }"
+		;
+	}
+
+	int num_variables;
+	int num_constraints;
+
+	boost::optional<unsigned long> random_seed = {};
+
+	FloatType density = 0.8;
+	std::pair<FloatType, FloatType> constr_coeff_range     = {-100.0, 100.0};
+	std::pair<FloatType, FloatType> constr_rhs_coeff_range = {-100.0, 100.0};
+	std::pair<FloatType, FloatType> objfunc_coeff_range    = {-100.0, 100.0};
+};
+
 class Problem : public util::print_printable {
 public:
 	using FloatType = double;
+
+	Problem(boost::optional<RandomProblemSpecification> spec_for_gen = {})
+		: m_spec_for_gen(spec_for_gen)
+	{ }
 
 	std::ptrdiff_t num_variables() const { if(m_max_var_id) return m_max_var_id->getValue() + 1; else return 0; }
 	std::ptrdiff_t num_constraints() const { return static_cast<std::ptrdiff_t>(m_constraints.size()); }
 
 	auto& constraints() const { return m_constraints; }
 	auto& variables()   const { return m_variables; }
+	auto& spec_for_gen() const { return m_spec_for_gen; }
 
 	template<typename CONSTRAINTS>
 	void add_constraint(CONSTRAINTS&& c, FloatType rhs) {
@@ -51,6 +90,11 @@ public:
 		const auto& print_term = [&](auto& coeff, auto&& vid) {
 			os << (coeff >= 0 ? "+" : "") << coeff << " x" << vid.getValue() << ' ';
 		};
+
+		if (spec_for_gen()) {
+			// only link comments supported. Will break if spec print is multiline.
+			os << "\\ Generated with: " << spec_for_gen() << "\n";
+		}
 
 		os << "Maximize\n\t";
 		for (const auto vid_and_vinf : variables()) {
@@ -86,31 +130,14 @@ private:
 		FloatType m_rhs;
 	};
 
-	std::unordered_map<VariableID, VariableProperties, typename util::MyHash<VariableID>::type> m_variables;
-	std::vector<Constraint> m_constraints;
-	boost::optional<VariableID> m_max_var_id;
+	std::unordered_map<VariableID, VariableProperties, typename util::MyHash<VariableID>::type> m_variables = {};
+	std::vector<Constraint> m_constraints = {};
+	boost::optional<VariableID> m_max_var_id = {};
+	boost::optional<RandomProblemSpecification> m_spec_for_gen;
 };
 
 class Assignments {
 
-};
-
-class RandomProblemSpecification {
-public:
-	RandomProblemSpecification(int num_variables, int num_constraints)
-		: num_variables(num_variables)
-		, num_constraints(num_constraints)
-	{ }
-
-	int num_variables;
-	int num_constraints;
-
-	boost::optional<unsigned long> random_seed = {};
-
-	Problem::FloatType density = 0.8;
-	std::pair<Problem::FloatType, Problem::FloatType> constr_coeff_range     = {-100.0, 100.0};
-	std::pair<Problem::FloatType, Problem::FloatType> constr_rhs_coeff_range = {-100.0, 100.0};
-	std::pair<Problem::FloatType, Problem::FloatType> objfunc_coeff_range    = {-100.0, 100.0};
 };
 
 Problem generate_random_problem(const RandomProblemSpecification& prob_spec);
