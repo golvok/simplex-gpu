@@ -47,6 +47,8 @@ struct ProgramConfig {
 	boost::optional<int> num_constraints;
 	boost::optional<double> constraint_density;
 	bool force_problem_padding;
+
+	boost::optional<std::string> problem_dump_filename;
 };
 
 struct ParsedArguments {

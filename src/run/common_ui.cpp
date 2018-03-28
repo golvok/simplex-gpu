@@ -36,6 +36,7 @@ ProgramConfig::ProgramConfig()
 	, num_constraints()
 	, constraint_density()
 	, force_problem_padding(false)
+	, problem_dump_filename()
 { }
 
 
@@ -65,6 +66,7 @@ ParsedArguments::ParsedArguments(int argc_int, char const** argv)
 		("num-constraints", po::value(&m_programConfig.num_constraints), "Number of constraints in random problem")
 		("constraint-density", po::value(&m_programConfig.constraint_density), "Chance that a given variable in included in a constraint")
 		("force-padding", po::bool_switch(&m_programConfig.force_problem_padding), "Force padding the problem with zeroes to match GPU implementation constraints")
+		("dump-problem", po::value(&m_programConfig.problem_dump_filename), "Before starting the solve, save the problem in this file")
 	;
 
 	po::options_description allopts;
@@ -120,6 +122,11 @@ CommonCmdlineData common_cmdline_ui(const cmdargs::ProgramConfig& config) {
 			return simplex::make_small_sample_problem();
 		}
 	}();
+
+	if (config.problem_dump_filename) {
+		std::ofstream prob_dumpfile(*config.problem_dump_filename);
+		prob_dumpfile << problem << '\n';
+	}
 
 	return {
 		problem,
