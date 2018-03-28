@@ -1,6 +1,9 @@
 
-#include "cmdargs.hpp"
+#include "common_ui.hpp"
 
+#include <impl/gpu_impl.hpp>
+
+#include <fstream>
 #include <unordered_set>
 
 #include <boost/program_options.hpp>

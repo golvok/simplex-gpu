@@ -76,7 +76,7 @@ GPULDFLAGS += $(GPU_EXTRA_FLAGS) $(GPU_WARNING_FLAGS) $(GPU_LIBRARY_LINK_FLAGS)
 .PRECIOUS: $(OBJ_DIR)%.o
 
 # define source directories
-SOURCE_DIRS = algo/ datastructures/ impl/ parsing/ util/ ./
+SOURCE_DIRS = algo/ datastructures/ impl/ run/ util/ ./
 
 ALL_OBJ_DIRS  = $(addprefix $(OBJ_DIR),  $(SOURCE_DIRS))
 ALL_DEPS_DIRS = $(addprefix $(DEPS_DIR), $(SOURCE_DIRS))
@@ -105,7 +105,7 @@ $(GPU_EXE)simplex-cpu-only: \
 	$(OBJ_DIR)algo/cpu_algos.o \
 	$(OBJ_DIR)datastructures/problem.o \
 	$(OBJ_DIR)impl/cpu_impl.o \
-	$(OBJ_DIR)parsing/cmdargs.o \
+	$(OBJ_DIR)run/common_ui.o \
 	$(OBJ_DIR)util/logging.o \
 	$(OBJ_DIR)cpu_only_main.o \
 	$(OBJ_DIR)impl/gpu_impl.o \
@@ -116,7 +116,7 @@ $(GPU_EXE)simplex: \
 	$(OBJ_DIR)datastructures/problem.o \
 	$(OBJ_DIR)impl/cpu_impl.o \
 	$(OBJ_DIR)impl/gpu_impl.o \
-	$(OBJ_DIR)parsing/cmdargs.o \
+	$(OBJ_DIR)run/common_ui.o \
 	$(OBJ_DIR)util/logging.o \
 	$(OBJ_DIR)gpu_cpu_main.o \
 

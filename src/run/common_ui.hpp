@@ -24,7 +24,7 @@ struct MetaConfig {
 private:
 	friend struct ParsedArguments;
 	friend ParsedArguments parse(int arc_int, char const** argv);
-	
+
 	MetaConfig();
 
 	/// The printing levels that should be enabled. Duplicate entries are possible & allowed
