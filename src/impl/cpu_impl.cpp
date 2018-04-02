@@ -19,6 +19,7 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	dout(DL::DBG1) << "num_variables = " << num_variables << "\nnum_constraints = " << num_constraints << '\n';
 
 	Eigen::MatrixXd constraint_matrix(num_constraints + 1, num_variables + 1);
+	constraint_matrix.setZero();
 
 	{int constr_count = 0;
 	for (const auto& constr : problem_stmt.constraints()) {
