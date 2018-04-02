@@ -76,8 +76,8 @@ Problem make_small_sample_problem() {
 
 Problem pad_with_zeroes_modulo(Problem&& p, std::ptrdiff_t height_modulus, std::ptrdiff_t width_modulus) {
 	// +1 is for the special 0th row and col
-	const std::ptrdiff_t rows_to_pad = height_modulus - ((1 + p.num_constraints()) % height_modulus);
-	const std::ptrdiff_t cols_to_pad =  width_modulus - ((1 + p.num_variables())   %  width_modulus);
+	const std::ptrdiff_t rows_to_pad = (height_modulus - ((1 + p.num_constraints()) % height_modulus)) % height_modulus;
+	const std::ptrdiff_t cols_to_pad = ( width_modulus - ((1 + p.num_variables())   %  width_modulus)) %  width_modulus;
 
 	std::vector<std::pair<VariableID, Problem::FloatType>> empty_constraint_with_new_vars;
 	for (const auto vid_and_vprop : p.variables()) {
