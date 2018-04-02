@@ -26,21 +26,16 @@ namespace gpu {
 
 #define K1_BLOCK_HEIGHT ((int)8)
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
+	assert(tab.height() % K1_BLOCK_HEIGHT == 0);
+
 	ThetaValuesAndEnteringColumn<double> result (
 		tab.height()
 	);
 
-	// for (int irow = 0; irow < tab.height(); ++irow) {
-	// 	const auto& val_at_entering = tab.at(irow, entering);
-	// 	result.entering_column.at((std::size_t)irow) = val_at_entering;
-	// 	result.theta_values.at((std::size_t)irow) = tab.at(irow, 0)/val_at_entering;
-	// }
-
-	// // std::cout << "theta_values computed: ";
-	// // // util::print_container(std::cout, result.theta_values);
-	// // std::cout << "\nentering_column copied: ";
-	// // // util::print_container(std::cout, result.entering_column);
-	// // std::cout << '\n';
+	int numBlocks = tab.height()/K1_BLOCK_HEIGHT;
+	int threadsPerBlock = K1_BLOCK_HEIGHT;
+	kernel1<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), result.theta_values.data(), result.entering_column.data(), entering.getValue());
+    cudaDeviceSynchronize();
 
 	return result;
 }
@@ -141,7 +136,7 @@ __global__ void kernel1(double* SimplexTableau, int width, double* theta, double
 	double w = SimplexTableau[idx*width + k];
 	/*Copy the weights of entering index k*/
 	columnK[idx] = w;
-	theta[idx] = SimplexTableau[idx*width +1]/w;
+	theta[idx] = SimplexTableau[idx*width]/w;
 }
 
 __global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r) {

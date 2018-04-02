@@ -14,8 +14,6 @@ boost::variant<
 > gpu_cpu_algo_from_paper(const Problem& problem) {
 	using cpu::create_tableau;
 	using cpu::find_entering_variable;
-	using cpu::get_theta_values_and_entering_column;
-	using cpu::find_leaving_variable;
 	using gpu::update_leaving_row;
 	using gpu::update_rest_of_basis;
 	using gpu::update_entering_column;
@@ -25,7 +23,7 @@ boost::variant<
 	auto cpu_tableau = create_tableau(problem);
 	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.height(), cpu_tableau.width());
 
-	auto gpu_tv_and_centering = gpu::ThetaValuesAndEnteringColumn<double>(cpu_tableau.height());
+	auto cpu_tv_and_centering = cpu::ThetaValuesAndEnteringColumn<double>(cpu_tableau.height());
 
 	auto copy_tableau_gpu_to_cpu = [&]() { cudaMemcpy(cpu_tableau.data(), gpu_tableau.data(), static_cast<std::size_t>(gpu_tableau.data_size()), cudaMemcpyDeviceToHost); };
 	auto copy_tableau_cpu_to_gpu = [&]() { cudaMemcpy(gpu_tableau.data(), cpu_tableau.data(), static_cast<std::size_t>(cpu_tableau.data_size()), cudaMemcpyHostToDevice); };
@@ -51,10 +49,15 @@ boost::variant<
 		
 		// k1
 		auto indent_gtvaec = dout(DL::DBG1).indentWithTitle("get_theta_values_and_entering_column");
-		auto cpu_tv_and_centering = get_theta_values_and_entering_column(cpu_tableau, *entering_var);
+
+		using gpu::get_theta_values_and_entering_column;
+		auto gpu_tv_and_centering = get_theta_values_and_entering_column(gpu_tableau, *entering_var);
+		cudaMemcpy(cpu_tv_and_centering.entering_column.data(), gpu_tv_and_centering.entering_column.data(), (std::size_t)gpu_tv_and_centering.entering_column.data_size(), cudaMemcpyDeviceToHost);
+		cudaMemcpy(cpu_tv_and_centering.theta_values.data(), gpu_tv_and_centering.theta_values.data(), (std::size_t)gpu_tv_and_centering.theta_values.data_size(), cudaMemcpyDeviceToHost);
 
 		indent_gtvaec.endIndent();
 		
+		using cpu::find_leaving_variable;
 		const auto leaving_var = find_leaving_variable(cpu_tv_and_centering);
 
 		if (!leaving_var) {
@@ -68,9 +71,6 @@ boost::variant<
 		};
 
 		// printf("cpu_tv_and_centering column(2): %f\n", cpu_tv_and_centering.entering_column.at(2));
-
-		cudaMemcpy(gpu_tv_and_centering.entering_column.data(), cpu_tv_and_centering.entering_column.data(), (std::size_t)gpu_tv_and_centering.entering_column.data_size(), cudaMemcpyHostToDevice);
-		cudaMemcpy(gpu_tv_and_centering.theta_values.data(), cpu_tv_and_centering.theta_values.data(), (std::size_t)gpu_tv_and_centering.theta_values.data_size(), cudaMemcpyHostToDevice);
 
 		// copy_tableau_gpu_to_cpu();
 		// {const auto indent = dout(DL::INFO).indentWithTitle("update_leaving_row before");
@@ -113,6 +113,8 @@ boost::variant<
 			}
 		}
 
+		cudaFree(gpu_tv_and_centering.theta_values.data());
+		cudaFree(gpu_tv_and_centering.entering_column.data());
 		iteration_num += 1;
 		// if (iteration_num == 3)	break;
 	}
@@ -123,8 +125,6 @@ boost::variant<
 		dout(DL::INFO) << cpu_tableau << '\n';
 	}
 
-	cudaFree(gpu_tv_and_centering.theta_values.data());
-	cudaFree(gpu_tv_and_centering.entering_column.data());
 	cudaFree(gpu_tableau.data());
 	delete cpu_tableau.data();
 
