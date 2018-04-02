@@ -131,6 +131,11 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 
 boost::optional<VariableIndex> find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("find_leaving_variable");
+	dout(DL::DBG2) << "theta_values given: ";
+	util::print_container(dout(DL::DBG2), tvals_and_centering.theta_values);
+	dout(DL::DBG2) << "\nentering_column given: ";
+	util::print_container(dout(DL::DBG2), tvals_and_centering.entering_column);
+	dout(DL::DBG2) << '\n';
 
 	auto lowest_theta_value = std::numeric_limits<double>::max();
 	boost::optional<VariableIndex> result;
