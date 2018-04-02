@@ -23,6 +23,8 @@ boost::variant<
 	auto cpu_tableau = create_tableau(problem);
 	auto gpu_tableau = Tableau<double>(NULL, cpu_tableau.height(), cpu_tableau.width());
 
+	auto cpu_first_row_memory_owner = std::vector<double>((std::size_t)cpu_tableau.width());
+	auto cpu_first_row = util::PointerAndSize<double>(cpu_first_row_memory_owner);
 	auto cpu_tv_and_centering = cpu::ThetaValuesAndEnteringColumn<double>(cpu_tableau.height());
 
 	auto copy_tableau_gpu_to_cpu = [&]() { cudaMemcpy(cpu_tableau.data(), gpu_tableau.data(), static_cast<std::size_t>(gpu_tableau.data_size()), cudaMemcpyDeviceToHost); };
@@ -34,13 +36,15 @@ boost::variant<
 
 	while (true) {
 		const auto indent = dout(DL::INFO).indentWithTitle([&](auto&& s){ s << "Iteration " << iteration_num; });
-		copy_tableau_gpu_to_cpu();
 
 		if (dout(DL::DBG1).enabled()) {
+			copy_tableau_gpu_to_cpu();
 			dout(DL::DBG1) << "tableau:\n" << cpu_tableau << '\n';
 		}
 
-		const auto entering_var = find_entering_variable(cpu_tableau);
+
+		cudaMemcpy(cpu_first_row.data(), gpu_tableau.data(), (std::size_t)cpu_first_row.data_size(), cudaMemcpyDeviceToHost);
+		const auto entering_var = find_entering_variable(cpu_first_row);
 
 		if (!entering_var) {
 			dout(DL::INFO) << "Solution reached!\n";

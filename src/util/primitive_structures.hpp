@@ -26,6 +26,12 @@ public:
 
 	T*& data() { return m_data; }
 
+	T* begin() { return m_data; }
+	T* end() { return m_data + m_size; }
+
+	T const* begin() const { return m_data; }
+	T const* end() const { return m_data + m_size; }
+
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wreturn-stack-address"
 	// the following incorrectly gives a warning (known bug in clang 3.8)

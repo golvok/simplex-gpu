@@ -25,7 +25,7 @@ boost::variant<
 		const auto indent = dout(DL::INFO).indentWithTitle([&](auto&& s){ s << "Iteration " << iteration_num; });
 		dout(DL::DBG1) << "tableau:\n" << tableau << '\n';
 
-		const auto entering_var = find_entering_variable(tableau);
+		const auto entering_var = find_entering_variable(util::PointerAndSize<double>(tableau.data(), tableau.width()));
 
 		if (!entering_var) {
 			dout(DL::INFO) << "Solution reached!\n";

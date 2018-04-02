@@ -86,13 +86,17 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	return result;
 }
 
-boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab) {
+boost::optional<VariableIndex> find_entering_variable(const util::PointerAndSize<double>& first_row) {
 	const auto indent = dout(DL::DBG1).indentWithTitle("find_entering_variable");
+	dout(DL::DBG2) << "first row given: ";
+	util::print_container(dout(DL::DBG2), first_row);
+	dout(DL::DBG2) << '\n';
+
 	double lowest_value = 0.0;
 	boost::optional<VariableIndex> result;
 
-	for (int icol = 1; icol < tab.width(); ++icol) {
-		const auto& val = tab.at(0, icol);
+	for (int icol = 1; icol < first_row.size(); ++icol) {
+		const auto& val = first_row.at(icol);
 		if (val < lowest_value) {
 			lowest_value = val;
 			result = util::make_id<VariableIndex>(icol);

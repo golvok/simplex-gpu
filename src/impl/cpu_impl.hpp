@@ -4,6 +4,7 @@
 #include <datastructures/problem.hpp>
 #include <datastructures/tableau.hpp>
 #include <impl/impl_common.hpp>
+#include <util/primitive_structures.hpp>
 #include <util/print_printable.hpp>
 
 #include <vector>
@@ -47,7 +48,7 @@ struct ThetaValuesAndEnteringColumn : util::print_printable {
 Tableau<double> create_tableau(const Problem& problem_stmt);
 
 // find smallest also negative value in the first row
-boost::optional<VariableIndex> find_entering_variable(const Tableau<double>& tab);
+boost::optional<VariableIndex> find_entering_variable(const util::PointerAndSize<double>& first_row);
 
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
