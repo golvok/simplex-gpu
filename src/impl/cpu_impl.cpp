@@ -92,7 +92,7 @@ boost::optional<VariableIndex> find_entering_variable(const util::PointerAndSize
 	util::print_container(dout(DL::DBG2), first_row);
 	dout(DL::DBG2) << '\n';
 
-	double lowest_value = 0.0;
+	double lowest_value = 0.001;
 	boost::optional<VariableIndex> result;
 
 	for (int icol = 1; icol < first_row.size(); ++icol) {

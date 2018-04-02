@@ -105,6 +105,7 @@ boost::variant<
 			}
 		}
 
+
 		{const auto indent = dout(DL::DBG1).indentWithTitle("update_entering_column");
 		update_entering_column( //k4
 			gpu_tableau,
