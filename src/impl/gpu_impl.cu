@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <iterator>
 
 __global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k);
 __global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r);
@@ -23,6 +24,7 @@ namespace gpu {
 // 	return result;
 // }
 
+#define K1_BLOCK_HEIGHT ((int)8)
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	ThetaValuesAndEnteringColumn<double> result (
 		tab.height()
@@ -94,10 +96,37 @@ void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<dou
 	kernel4<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.entering.getValue(), leaving_and_entering.leaving.getValue());
 }
 
+
+template<typename INTEGRAL>
+static INTEGRAL greatest_common_multiple(INTEGRAL a, INTEGRAL b) {
+	while (true) {
+		if (a == 0) return b;
+		b %= a;
+		if (b == 0) return a;
+		a %= b;
+	}
+}
+
+template<typename IT>
+static int least_common_multiple(IT&& nums_begin, IT&& nums_end) {
+	int result = *nums_begin;
+	if (result == 0) { return 0; }
+
+	for (IT it = nums_begin; it != nums_end; ++it) {
+		int num = *it;
+		if (num == 0) { return 0; }
+		result = (result*num)/greatest_common_multiple(num, result);
+	}
+
+	return result;
+}
+
 ProblemContraints problem_constraints() {
+	int height_moduli[3] = {K1_BLOCK_HEIGHT, K3_BLOCK_HEIGHT, K4_BLOCK_HEIGHT, };
+	int  width_moduli[2] = {K2_BLOCK_WIDTH,  K3_BLOCK_WIDTH, };
 	return {
-		K3_BLOCK_HEIGHT,
-		K3_BLOCK_WIDTH,
+		least_common_multiple(&height_moduli[0], &height_moduli[sizeof(height_moduli)/sizeof(height_moduli[0])]),
+		least_common_multiple(&width_moduli[0], &width_moduli[sizeof(width_moduli)/sizeof(width_moduli[0])]),
 	};
 }
 
