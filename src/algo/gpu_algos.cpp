@@ -50,7 +50,10 @@ boost::variant<
 		}
 		
 		// k1
+		auto indent_gtvaec = dout(DL::DBG1).indentWithTitle("get_theta_values_and_entering_column");
 		auto cpu_tv_and_centering = get_theta_values_and_entering_column(cpu_tableau, *entering_var);
+
+		indent_gtvaec.endIndent();
 		
 		const auto leaving_var = find_leaving_variable(cpu_tv_and_centering);
 
@@ -74,37 +77,40 @@ boost::variant<
 		// 	dout(DL::INFO) << cpu_tableau << '\n';
 		// }
 
+		{const auto indent = dout(DL::DBG1).indentWithTitle("update_leaving_row");
 		update_leaving_row( // k2
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
 			entering_and_leaving
-		),
-
-		copy_tableau_gpu_to_cpu();
-		{
-			dout(DL::INFO) << "update_leaving_row after:\n" << cpu_tableau << '\n';
+		);
+			if (dout(DL::DBG2).enabled()) {
+				copy_tableau_gpu_to_cpu();
+				dout(DL::DBG2) << "tableau after:\n" << cpu_tableau << '\n';
+			}
 		}
 
+		{const auto indent = dout(DL::DBG1).indentWithTitle("update_rest_of_basis");
 		update_rest_of_basis( // k3
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
 			entering_and_leaving.leaving
-		),
-
-		copy_tableau_gpu_to_cpu();
-		{
-			dout(DL::INFO) << "update_rest_of_basis after:\n" << cpu_tableau << '\n';
+		);
+			if (dout(DL::DBG2).enabled()) {
+				copy_tableau_gpu_to_cpu();
+				dout(DL::DBG2) << "tableau after:\n" << cpu_tableau << '\n';
+			}
 		}
 
+		{const auto indent = dout(DL::DBG1).indentWithTitle("update_entering_column");
 		update_entering_column( //k4
 			gpu_tableau,
 			gpu_tv_and_centering.entering_column,
 			entering_and_leaving
 		);
-
-		copy_tableau_gpu_to_cpu();
-		{
-			dout(DL::INFO) << "update_entering_column after:\n" << cpu_tableau << '\n';
+			if (dout(DL::DBG2).enabled()) {
+				copy_tableau_gpu_to_cpu();
+				dout(DL::DBG2) << "tableau after:\n" << cpu_tableau << '\n';
+			}
 		}
 
 		iteration_num += 1;

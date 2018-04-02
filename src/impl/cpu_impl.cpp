@@ -170,7 +170,6 @@ Tableau<double> update_leaving_row(Tableau<double>&& tab, const std::vector<doub
 		tab.at(leaving_and_entering.leaving, icol) /= denom;
 	}
 
-	dout(DL::LINDA) << "update_leaving_row after:\n" << tab << '\n';
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;
@@ -189,7 +188,6 @@ Tableau<double> update_rest_of_basis(Tableau<double>&& tab, const std::vector<do
 		}
 	}
 
-	dout(DL::LINDA) << "update_rest_of_basis after:\n" << tab << '\n';
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
 	return tab;
@@ -212,7 +210,6 @@ Tableau<double> update_entering_column(Tableau<double>&& tab, const std::vector<
 
 	dout(DL::DBG2) << "tableau after:\n" << tab << '\n';
 
-	dout(DL::LINDA) << "update_entering_column after:\n" << tab << '\n';
 	return tab;
 }
 
