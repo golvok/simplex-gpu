@@ -19,7 +19,10 @@ int main(int argc, char const** argv) {
 		dout.enable_level(l);
 	}
 
-	const auto result = program_main(parsed_args.programConfig());
+	auto config = parsed_args.programConfig();
+	config.force_problem_padding = true; // GPU version requires padding
+
+	const auto result = program_main(config);
 
 	return result;
 }
