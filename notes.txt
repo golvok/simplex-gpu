@@ -1,0 +1,1 @@
+make && simplex -r --random-problem-seed 2 --num-variables 5000 --num-constraints 5000 --constraint-density 0.8 --force-padding > gpu.out && tail gpu.out -n 2
