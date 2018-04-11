@@ -25,6 +25,9 @@ export GPU_SIMPLEX_BENCHMARKDIR="$GPU_SIMPLEX_ROOTDIR/benchmarks/";
 export PATH="$GPU_SIMPLEX_SCRIPTSDIR:$GPU_SIMPLEX_CPUBINDIR:$GPU_SIMPLEX_GPUBINDIR:$PATH"
 # export LD_LIBRARY_PATH="$(readlink --canonicalize ???):$LD_LIBRARY_PATH"
 
+export HOST_COMPILER='clang-3.8'
+export CUDA_PATH='/usr/'
+
 echo "Entering $SHELL_EXE with setup environment. GPU_SIMPLEX_ROOTDIR=$GPU_SIMPLEX_ROOTDIR";
 $SHELL_EXE
 echo "Exiting environment. Old GPU_SIMPLEX_ROOTDIR=$GPU_SIMPLEX_ROOTDIR";

@@ -19,18 +19,6 @@ __global__ void kernel4(double* SimplexTableau, int width, const double* columnK
 namespace simplex {
 namespace gpu {
 
-// Tableau<double> create_tableau(const Problem& problem_stmt) {
-// 	(void)problem_stmt;
-
-// 	Tableau<double> result (
-// 		0,
-// 		4,
-// 		5
-// 	);
-
-// 	return result;
-// }
-
 #define K1_BLOCK_HEIGHT ((int)8)
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	assert(tab.height() % K1_BLOCK_HEIGHT == 0);
@@ -42,7 +30,7 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	int numBlocks = tab.height()/K1_BLOCK_HEIGHT;
 	int threadsPerBlock = K1_BLOCK_HEIGHT;
 	kernel1<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), result.theta_values.data(), result.entering_column.data(), entering.getValue());
-    cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
 
 	return result;
 }
