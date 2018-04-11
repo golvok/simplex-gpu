@@ -2,7 +2,14 @@
 
 #include <cassert>
 #include <cstdio>
+#include <iostream>
 #include <iterator>
+#include <limits>
+
+#include <thrust/execution_policy.h>
+#include <thrust/functional.h>
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/transform_reduce.h>
 
 __global__ void kernel1(double* SimplexTableau, int width, double* theta, double* columnK, int k);
 __global__ void kernel2(double* SimplexTableau, int width, const double* columnK, int r);
@@ -40,26 +47,63 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 	return result;
 }
 
-VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
+template<typename NUMERIC>
+struct FLVComputation {
+	typedef thrust::tuple<NUMERIC,NUMERIC,ptrdiff_t> NumericTuple;
+
+	__host__ __device__
+	static NumericTuple initial_value() {
+		return thrust::make_tuple(std::numeric_limits<NUMERIC>::max(), 0.0f, (ptrdiff_t)-1);
+	}
+
+	struct transformer : thrust::unary_function<NumericTuple, NumericTuple> {
+		__host__ __device__
+		NumericTuple operator()(const NumericTuple& v) const {
+			if (thrust::get<1>(v) > 0) {
+				return v;
+			} else {
+				return initial_value();
+			}
+		}
+	};
+
+	struct reducer : thrust::binary_function<NumericTuple, NumericTuple, NumericTuple> {
+		__host__ __device__
+		NumericTuple operator()(const NumericTuple& lhs, const NumericTuple& rhs) const {
+			return thrust::get<0>(lhs) < thrust::get<0>(rhs) ? lhs : rhs;
+		}
+	};
+};
+
+ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
 	// double lowest_theta_value = std::numeric_limits<double>::max();
 	VariableIndex result;
 
-	// for (int irow = 1; irow < (int)tvals_and_centering.theta_values.size(); ++irow) {
-	// 	const auto& theta_val = tvals_and_centering.theta_values.at((std::size_t)irow);
-	// 	const auto& tab_val = tvals_and_centering.entering_column.at((std::size_t)irow);
-	// 	if (tab_val > 0 && (!result || theta_val < lowest_theta_value)) {
-	// 		lowest_theta_value = theta_val;
-	// 		result = util::make_id<VariableIndex>(irow);
-	// 	}
-	// }
+	ptrdiff_t row_index = thrust::get<2>(thrust::transform_reduce(
+		thrust::cuda::par,
+		thrust::make_zip_iterator(thrust::make_tuple(
+			tvals_and_centering.theta_values.begin() + 1,
+			tvals_and_centering.entering_column.begin() + 1,
+			thrust::counting_iterator<ptrdiff_t>(1)
+		)),
+		thrust::make_zip_iterator(thrust::make_tuple(
+			tvals_and_centering.theta_values.end(),
+			tvals_and_centering.entering_column.end(),
+			thrust::counting_iterator<ptrdiff_t>(-1)
+		)),
+		FLVComputation<double>::transformer(),
+		FLVComputation<double>::initial_value(),
+		FLVComputation<double>::reducer()
+	));
 
-	// if (result) {
-	// 	// std::cout << "found leaving variable: " << *result << '\n';
-	// } else {
-	// 	// std::cout << "did not find a leaving variable\n";
-	// }
+	if (row_index >= 0) {
+		// emulate logging indentation
+		std::cout << "      found leaving variable: var" << row_index << '\n';
+	} else {
+		std::cout << "      did not find a leaving variable\n";
+	}
 
-	return result;
+	return row_index;
 }
 
 #define K2_BLOCK_WIDTH ((int)8)

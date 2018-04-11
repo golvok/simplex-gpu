@@ -40,7 +40,7 @@ struct ProblemContraints {
 
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
-VariableIndex find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
+ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);
 
 void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering);
 

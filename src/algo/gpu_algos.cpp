@@ -6,6 +6,8 @@
 
 #include <cuda_runtime.h>
 
+static const bool use_cpu_find_leaving = false;
+
 namespace simplex{
 
 boost::variant<
@@ -13,7 +15,6 @@ boost::variant<
 	TableauErrors
 > gpu_cpu_algo_from_paper(const Problem& problem) {
 	using cpu::create_tableau;
-	using cpu::find_entering_variable;
 	using gpu::update_leaving_row;
 	using gpu::update_rest_of_basis;
 	using gpu::update_entering_column;
@@ -43,8 +44,10 @@ boost::variant<
 		}
 
 
+		using cpu::find_entering_variable;
 		cudaMemcpy(cpu_first_row.data(), gpu_tableau.data(), (std::size_t)cpu_first_row.data_size(), cudaMemcpyDeviceToHost);
 		const auto entering_var = find_entering_variable(cpu_first_row);
+		// const auto entering_var = &entering_var_storage;
 
 		if (!entering_var) {
 			dout(DL::INFO) << "Solution reached!\n";
@@ -56,13 +59,21 @@ boost::variant<
 
 		using gpu::get_theta_values_and_entering_column;
 		auto gpu_tv_and_centering = get_theta_values_and_entering_column(gpu_tableau, *entering_var);
-		cudaMemcpy(cpu_tv_and_centering.entering_column.data(), gpu_tv_and_centering.entering_column.data(), (std::size_t)gpu_tv_and_centering.entering_column.data_size(), cudaMemcpyDeviceToHost);
-		cudaMemcpy(cpu_tv_and_centering.theta_values.data(), gpu_tv_and_centering.theta_values.data(), (std::size_t)gpu_tv_and_centering.theta_values.data_size(), cudaMemcpyDeviceToHost);
 
 		indent_gtvaec.endIndent();
-		
-		using cpu::find_leaving_variable;
-		const auto leaving_var = find_leaving_variable(cpu_tv_and_centering);
+
+		boost::optional<VariableIndex> leaving_var;
+		if (use_cpu_find_leaving) {
+			cudaMemcpy(cpu_tv_and_centering.entering_column.data(), gpu_tv_and_centering.entering_column.data(), (std::size_t)gpu_tv_and_centering.entering_column.data_size(), cudaMemcpyDeviceToHost);
+			cudaMemcpy(cpu_tv_and_centering.theta_values.data(), gpu_tv_and_centering.theta_values.data(), (std::size_t)gpu_tv_and_centering.theta_values.data_size(), cudaMemcpyDeviceToHost);
+			leaving_var = find_leaving_variable(cpu_tv_and_centering);
+		} else {
+			const auto indent = dout(DL::DBG1).indentWithTitle("find_leaving_variable");
+			const auto leaving_var_raw = find_leaving_variable(gpu_tv_and_centering);
+			if (leaving_var_raw >= 0) {
+				leaving_var = util::make_id<VariableIndex>((VariableIndex::IDType)leaving_var_raw);
+			}
+		}
 
 		if (!leaving_var) {
 			dout(DL::INFO) << "Problem is unbounded!\n";
