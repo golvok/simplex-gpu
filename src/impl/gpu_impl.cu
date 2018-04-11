@@ -1,5 +1,7 @@
 #include "gpu_impl.hpp"
 
+#include <impl/reduction_kernel.cu>
+
 #include <cassert>
 #include <cstdio>
 #include <iostream>
