@@ -56,18 +56,19 @@ Tableau<double> create_tableau(const Problem& problem_stmt) {
 	const auto& upper_left = basic_coeff*inv_basis_times_constraint_coeffs;
 	const auto& lower_left = inv_basis_times_constraint_coeffs;
 
-	dout(DL::DBG3) << "upper_right:\n" << upper_right << '\n';
-	dout(DL::DBG3) << "lower_right:\n" << lower_right << '\n';
+	(void)upper_right; // dout(DL::DBG3) << "upper_right:\n" << upper_right << '\n';
+	(void)lower_right; // dout(DL::DBG3) << "lower_right:\n" << lower_right << '\n';
 
-	dout(DL::DBG3) << "upper_left:\n" << upper_left << '\n';
-	dout(DL::DBG3) << "lower_left:\n" << lower_left << '\n';
+	(void)upper_left; // dout(DL::DBG3) << "upper_left:\n" << upper_left << '\n';
+	(void)lower_left; // dout(DL::DBG3) << "lower_left:\n" << lower_left << '\n';
 
-	Eigen::MatrixXd tableau_data(num_constraints+1, num_variables+1); tableau_data <<
-		upper_left, upper_right, lower_left, lower_right
-		// 9.0, 1.0, -0.5, 0.0, 3.0/2.0, 0.0,
-		// 3.0, 0.0,  0.5, 1.0, 0.5    , 0.0,
-		// 6.0, 0.0,3/2.0, 0  , -0.5   , 1.0
-	;
+	// Eigen::MatrixXd tableau_data(num_constraints+1, num_variables+1); tableau_data <<
+	// 	upper_left, upper_right, lower_left, lower_right
+	// ;
+
+	constraint_matrix.row(0) *= -1;
+	constraint_matrix(0,0) = 0; // upper_left(0,0); // always zero
+	const auto& tableau_data = constraint_matrix;
 
 	dout(DL::DBG3) << "tableau_data:\n" << tableau_data << '\n';
 
