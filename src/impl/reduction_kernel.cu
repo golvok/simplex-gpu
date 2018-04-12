@@ -52,16 +52,16 @@ struct SharedMemory<double> {
 	operator.  This operator is very expensive on GPUs, and the interleaved
 	inactivity means that no whole warps are active, which is also very
 	inefficient */
-template <class T>
+template <class T, typename InputIt, typename Computation>
 __global__ void
-reduce0(T* g_idata, T* g_odata, unsigned int n) {
+reduce0(InputIt g_idata, T* g_odata, unsigned int n, Computation c) {
 	T* sdata = SharedMemory<T>();
 
 	// load shared mem
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-	sdata[tid] = (i < n) ? g_idata[i] : 0;
+	sdata[tid] = (i < n) ? c.transform(g_idata[i]) : c.identity();
 
 	__syncthreads();
 
@@ -69,14 +69,14 @@ reduce0(T* g_idata, T* g_odata, unsigned int n) {
 	for (unsigned int s=1; s < blockDim.x; s *= 2) {
 		// modulo arithmetic is slow!
 		if ((tid % (2*s)) == 0) {
-			sdata[tid] += sdata[tid + s];
+			sdata[tid] = c.reduce(sdata[tid], sdata[tid + s]);
 		}
 
 		__syncthreads();
 	}
 
 	// write result for this block to global mem
-	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+	if (tid == 0) *g_odata = sdata[0];
 }
 
 /* This version uses contiguous threads, but its interleaved
@@ -485,217 +485,217 @@ bool isPow2(unsigned int x) {
 ////////////////////////////////////////////////////////////////////////////////
 // Wrapper function for kernel launch
 ////////////////////////////////////////////////////////////////////////////////
-template <class T>
-void
-reduce(int size, int threads, int blocks,
-	   int whichKernel, T* d_idata, T* d_odata) {
-	dim3 dimBlock(threads, 1, 1);
-	dim3 dimGrid(blocks, 1, 1);
+// template <class T>
+// void
+// reduce(int size, int threads, int blocks,
+// 	   int whichKernel, T* d_idata, T* d_odata) {
+// 	dim3 dimBlock(threads, 1, 1);
+// 	dim3 dimGrid(blocks, 1, 1);
 
-	// when there is only one warp per block, we need to allocate two warps
-	// worth of shared memory so that we don't index shared memory out of bounds
-	int smemSize = (threads <= 32) ? 2 * threads * sizeof(T) : threads * sizeof(T);
+// 	// when there is only one warp per block, we need to allocate two warps
+// 	// worth of shared memory so that we don't index shared memory out of bounds
+// 	int smemSize = (threads <= 32) ? 2 * threads * sizeof(T) : threads * sizeof(T);
 
-	// choose which of the optimized versions of reduction to launch
-	switch (whichKernel) {
-		case 0:
-			reduce0<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-			break;
+// 	// choose which of the optimized versions of reduction to launch
+// 	switch (whichKernel) {
+// 		case 0:
+// 			reduce0<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 			break;
 
-		case 1:
-			reduce1<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-			break;
+// 		case 1:
+// 			reduce1<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 			break;
 
-		case 2:
-			reduce2<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-			break;
+// 		case 2:
+// 			reduce2<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 			break;
 
-		case 3:
-			reduce3<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-			break;
+// 		case 3:
+// 			reduce3<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 			break;
 
-		case 4:
-			switch (threads) {
-				case 512:
-					reduce4<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 		case 4:
+// 			switch (threads) {
+// 				case 512:
+// 					reduce4<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 256:
-					reduce4<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 256:
+// 					reduce4<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 128:
-					reduce4<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 128:
+// 					reduce4<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 64:
-					reduce4<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 64:
+// 					reduce4<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 32:
-					reduce4<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 32:
+// 					reduce4<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 16:
-					reduce4<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 16:
+// 					reduce4<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  8:
-					reduce4<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  8:
+// 					reduce4<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  4:
-					reduce4<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  4:
+// 					reduce4<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  2:
-					reduce4<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  2:
+// 					reduce4<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  1:
-					reduce4<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
-			}
+// 				case  1:
+// 					reduce4<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
+// 			}
 
-			break;
+// 			break;
 
-		case 5:
-			switch (threads) {
-				case 512:
-					reduce5<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 		case 5:
+// 			switch (threads) {
+// 				case 512:
+// 					reduce5<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 256:
-					reduce5<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 256:
+// 					reduce5<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 128:
-					reduce5<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 128:
+// 					reduce5<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 64:
-					reduce5<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 64:
+// 					reduce5<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 32:
-					reduce5<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 32:
+// 					reduce5<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case 16:
-					reduce5<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case 16:
+// 					reduce5<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  8:
-					reduce5<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  8:
+// 					reduce5<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  4:
-					reduce5<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  4:
+// 					reduce5<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  2:
-					reduce5<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
+// 				case  2:
+// 					reduce5<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
 
-				case  1:
-					reduce5<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-					break;
-			}
+// 				case  1:
+// 					reduce5<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 					break;
+// 			}
 
-			break;
+// 			break;
 
-		case 6:
-		default:
-			if (isPow2(size)) {
-				switch (threads) {
-					case 512:
-						reduce6<T, 512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 		case 6:
+// 		default:
+// 			if (isPow2(size)) {
+// 				switch (threads) {
+// 					case 512:
+// 						reduce6<T, 512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 256:
-						reduce6<T, 256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 256:
+// 						reduce6<T, 256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 128:
-						reduce6<T, 128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 128:
+// 						reduce6<T, 128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 64:
-						reduce6<T,  64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 64:
+// 						reduce6<T,  64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 32:
-						reduce6<T,  32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 32:
+// 						reduce6<T,  32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 16:
-						reduce6<T,  16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 16:
+// 						reduce6<T,  16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  8:
-						reduce6<T,   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  8:
+// 						reduce6<T,   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  4:
-						reduce6<T,   4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  4:
+// 						reduce6<T,   4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  2:
-						reduce6<T,   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  2:
+// 						reduce6<T,   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  1:
-						reduce6<T,   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
-				}
-			}
-			else {
-				switch (threads) {
-					case 512:
-						reduce6<T, 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  1:
+// 						reduce6<T,   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
+// 				}
+// 			}
+// 			else {
+// 				switch (threads) {
+// 					case 512:
+// 						reduce6<T, 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 256:
-						reduce6<T, 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 256:
+// 						reduce6<T, 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 128:
-						reduce6<T, 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 128:
+// 						reduce6<T, 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 64:
-						reduce6<T,  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 64:
+// 						reduce6<T,  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 32:
-						reduce6<T,  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 32:
+// 						reduce6<T,  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case 16:
-						reduce6<T,  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case 16:
+// 						reduce6<T,  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  8:
-						reduce6<T,   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  8:
+// 						reduce6<T,   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  4:
-						reduce6<T,   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  4:
+// 						reduce6<T,   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  2:
-						reduce6<T,   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
+// 					case  2:
+// 						reduce6<T,   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
 
-					case  1:
-						reduce6<T,   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
-						break;
-				}
-			}
+// 					case  1:
+// 						reduce6<T,   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+// 						break;
+// 				}
+// 			}
 
-			break;
-	}
-}
+// 			break;
+// 	}
+// }
 
 } // end namespace reductions
 

@@ -8,6 +8,7 @@
 #include <iterator>
 #include <limits>
 
+#include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
 #include <thrust/iterator/zip_iterator.h>
@@ -39,52 +40,133 @@ ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const 
 
 template<typename NUMERIC>
 struct FLVComputation {
-	typedef thrust::tuple<NUMERIC,NUMERIC,ptrdiff_t> NumericTuple;
+	typedef ptrdiff_t Index;
+	typedef thrust::tuple<NUMERIC,NUMERIC,Index> NumericTuple;
 
-	__host__ __device__
-	static NumericTuple initial_value() {
-		return thrust::make_tuple(std::numeric_limits<NUMERIC>::max(), 0.0f, (ptrdiff_t)-1);
-	}
-
-	struct transformer : thrust::unary_function<NumericTuple, NumericTuple> {
+	struct Direct {
 		__host__ __device__
-		NumericTuple operator()(const NumericTuple& v) const {
-			if (thrust::get<1>(v) > 0) {
-				return v;
-			} else {
-				return initial_value();
-			}
+		static NumericTuple identity() {
+			return thrust::make_tuple(std::numeric_limits<NUMERIC>::max(), 0.0f, (Index)-1);
 		}
+
+		struct transformer : thrust::unary_function<NumericTuple, NumericTuple> {
+			__host__ __device__
+			NumericTuple operator()(const NumericTuple& v) const {
+				if (thrust::get<1>(v) > 0) {
+					return v;
+				} else {
+					return identity();
+				}
+			}
+		};
+
+		struct reducer : thrust::binary_function<NumericTuple, NumericTuple, NumericTuple> {
+			__host__ __device__
+			NumericTuple operator()(const NumericTuple& lhs, const NumericTuple& rhs) const {
+				return thrust::get<0>(lhs) < thrust::get<0>(rhs) ? lhs : rhs;
+			}
+		};
 	};
 
-	struct reducer : thrust::binary_function<NumericTuple, NumericTuple, NumericTuple> {
+	struct Indirect {
+		const NUMERIC* const theta_values;
+		const NUMERIC* const entering_column;
+
+		Indirect(
+			const ThetaValuesAndEnteringColumn<NUMERIC>& tv_and_centering_column
+		)
+			: theta_values(tv_and_centering_column.theta_values.data())
+			, entering_column(tv_and_centering_column.entering_column.data())
+		{ }
+
 		__host__ __device__
-		NumericTuple operator()(const NumericTuple& lhs, const NumericTuple& rhs) const {
-			return thrust::get<0>(lhs) < thrust::get<0>(rhs) ? lhs : rhs;
+		Index identity() const { return -1; }
+
+		__host__ __device__
+		Index should_reduce(const Index& v) const {
+			return v != identity() && entering_column[v] > 0;
+		}
+
+		__host__ __device__
+		Index transform(const Index& v) const {
+			if (should_reduce(v)) {
+				return v;
+			} else {
+				return identity();
+			}
+		}
+
+		__host__ __device__
+		Index reduce(const Index& lhs, const Index& rhs) const {
+			if (lhs == identity()) {
+				return rhs;
+			} else if (rhs == identity()) {
+				return lhs;
+			} else {
+				if (theta_values[lhs] < theta_values[rhs]) {
+					return lhs;
+				} else {
+					return rhs;
+				}
+			}
 		}
 	};
 };
 
-ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
-	// double lowest_theta_value = std::numeric_limits<double>::max();
-	VariableIndex result;
+enum FLVMode {
+	FLV_THRUST,
+	FLV_REDUCE_K0,
+};
 
-	ptrdiff_t row_index = thrust::get<2>(thrust::transform_reduce(
-		thrust::cuda::par,
-		thrust::make_zip_iterator(thrust::make_tuple(
-			tvals_and_centering.theta_values.begin() + 1,
-			tvals_and_centering.entering_column.begin() + 1,
-			thrust::counting_iterator<ptrdiff_t>(1)
-		)),
-		thrust::make_zip_iterator(thrust::make_tuple(
-			tvals_and_centering.theta_values.end(),
-			tvals_and_centering.entering_column.end(),
-			thrust::counting_iterator<ptrdiff_t>(-1)
-		)),
-		FLVComputation<double>::transformer(),
-		FLVComputation<double>::initial_value(),
-		FLVComputation<double>::reducer()
-	));
+#ifndef FLV_MODE_DEFAULT
+	#define FLV_MODE_DEFAULT FLV_THRUST
+#endif
+static const bool flv_mode = FLV_MODE_DEFAULT;
+
+#define FLV_BLOCK_HEIGHT ((int)16)
+ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering) {
+	typedef FLVComputation<double> FLVComp;
+	typedef FLVComp::Index Index;
+
+	ptrdiff_t row_index = -1;
+	if (flv_mode == FLV_THRUST) {
+		row_index = thrust::get<2>(thrust::transform_reduce(
+			thrust::cuda::par,
+			thrust::make_zip_iterator(thrust::make_tuple(
+				tvals_and_centering.theta_values.begin() + 1,
+				tvals_and_centering.entering_column.begin() + 1,
+				thrust::counting_iterator<ptrdiff_t>(1)
+			)),
+			thrust::make_zip_iterator(thrust::make_tuple(
+				tvals_and_centering.theta_values.end(),
+				tvals_and_centering.entering_column.end(),
+				thrust::counting_iterator<ptrdiff_t>(-1)
+			)),
+			FLVComp::Direct::transformer(),
+			FLVComp::Direct::identity(),
+			FLVComp::Direct::reducer()
+		));
+	} else {
+		const ptrdiff_t tab_height = tvals_and_centering.theta_values.size();
+		assert(tab_height % FLV_BLOCK_HEIGHT == 0);
+		assert(tvals_and_centering.entering_column.size() == tab_height);
+
+		thrust::device_vector<Index> row_index_storage(1);
+
+		int numBlocks = tab_height/FLV_BLOCK_HEIGHT;
+		int threadsPerBlock = FLV_BLOCK_HEIGHT;
+		int smemSize = (threadsPerBlock <= 32) ? 2 * threadsPerBlock * sizeof(Index) : threadsPerBlock * sizeof(Index);
+
+		if (flv_mode == FLV_REDUCE_K0) {
+			reductions::reduce0<Index><<< numBlocks, threadsPerBlock, smemSize >>>(
+				thrust::counting_iterator<Index>(1),
+				row_index_storage.data().get(),
+				tab_height - 1,
+				FLVComp::Indirect(tvals_and_centering)
+			);
+			Index row_index = *row_index_storage.data();
+		}
+	}
 
 	if (row_index >= 0) {
 		// emulate logging indentation
@@ -151,7 +233,7 @@ static int least_common_multiple(IT&& nums_begin, IT&& nums_end) {
 }
 
 ProblemContraints problem_constraints() {
-	int height_moduli[3] = {K1_BLOCK_HEIGHT, K3_BLOCK_HEIGHT, K4_BLOCK_HEIGHT, };
+	int height_moduli[4] = {K1_BLOCK_HEIGHT, FLV_BLOCK_HEIGHT,  K3_BLOCK_HEIGHT, K4_BLOCK_HEIGHT, };
 	int  width_moduli[2] = {K2_BLOCK_WIDTH,  K3_BLOCK_WIDTH, };
 	return {
 		least_common_multiple(&height_moduli[0], &height_moduli[sizeof(height_moduli)/sizeof(height_moduli[0])]),
