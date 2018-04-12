@@ -1,1 +1,21 @@
-make && simplex -r --random-problem-seed 2 --num-variables 5000 --num-constraints 5000 --constraint-density 0.8 --force-padding > gpu.out && tail gpu.out -n 2
+make && simplex -r --random-problem-seed 2 --num-variables 1000 --num-constraints 1000 --constraint-density 0.8 --force-padding > gpu.out && tail gpu.out -n 2
+
+
+128
+256
+512
+1024
+2048
+4096
+8192
+16384
+32768
+65536
+
+simplex -r --random-problem-seed 2 --num-variables 128 --num-constraints 128 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 256 --num-constraints 256 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 512 --num-constraints 512 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 1024 --num-constraints 1024 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 2048 --num-constraints 2048 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 4096 --num-constraints 4096 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
+simplex -r --random-problem-seed 2 --num-variables 8192 --num-constraints 8192 --constraint-density 0.9 --force-padding > gpu.out && tail gpu.out -n 5
