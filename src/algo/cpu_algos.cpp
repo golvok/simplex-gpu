@@ -2,6 +2,7 @@
 
 #include <impl/cpu_impl.hpp>
 #include <util/logging.hpp>
+#include <chrono>
 
 namespace simplex{
 
@@ -21,7 +22,10 @@ boost::variant<
 	auto tableau = create_tableau(problem);
 	int iteration_num = 1;
 
+	double total_time = 0;
 	while (true) {
+		auto start = std::chrono::system_clock::now();;
+
 		const auto indent = dout(DL::INFO).indentWithTitle([&](auto&& s){ s << "Iteration " << iteration_num; });
 		dout(DL::DBG1) << "tableau:\n" << tableau << '\n';
 
@@ -61,6 +65,12 @@ boost::variant<
 		);
 
 		iteration_num += 1;
+
+		auto finish = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = finish-start;
+		total_time += elapsed_seconds.count();
+
+		if (iteration_num == 10000) break;
 	}
 
 	{const auto indent = dout(DL::INFO).indentWithTitle("Result");
@@ -68,6 +78,10 @@ boost::variant<
 	}
 
 	delete tableau.data();
+
+	double average_time = total_time/(iteration_num-1);
+	std::cout << "total_time: " << total_time <<  "\n";
+	std::cout << "average_time: " << average_time <<  "\n";
 
 	return Assignments{};
 }
