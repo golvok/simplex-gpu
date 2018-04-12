@@ -94,7 +94,7 @@ ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tval
 	return row_index;
 }
 
-#define K2_BLOCK_WIDTH ((int)8)
+#define K2_BLOCK_WIDTH ((int)512)
 void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
 
 	int numBlocks = tab.width()/K2_BLOCK_WIDTH;
@@ -102,8 +102,8 @@ void update_leaving_row(Tableau<double>& tab, const util::PointerAndSize<double>
 	kernel2<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), entering_column.data(), leaving_and_entering.leaving.getValue());
 }
 
-#define K3_BLOCK_WIDTH ((int)8)
-#define K3_BLOCK_HEIGHT ((int)4)
+#define K3_BLOCK_WIDTH ((int)128)
+#define K3_BLOCK_HEIGHT ((int)128)
 void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariableIndex leaving) {
 	assert(tab.height() % K3_BLOCK_HEIGHT == 0);
 	assert(tab.width()  % K3_BLOCK_WIDTH  == 0);
@@ -114,7 +114,7 @@ void update_rest_of_basis(Tableau<double>& tab, const util::PointerAndSize<doubl
 	kernel3<<<numBlocks, threadsPerBlock>>>(tab.data(), tab.width(), tab.height(), entering_column.data(), leaving.getValue());
 }
 
-#define K4_BLOCK_HEIGHT ((int)8)
+#define K4_BLOCK_HEIGHT ((int)512)
 void update_entering_column(Tableau<double>& tab, const util::PointerAndSize<double>& entering_column, VariablePair leaving_and_entering) {
 
 	int numBlocks = tab.height()/K4_BLOCK_HEIGHT;
