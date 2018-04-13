@@ -35,6 +35,79 @@ namespace {
 namespace simplex {
 namespace gpu {
 
+template<typename NUMERIC>
+struct FEVComputation {
+	typedef ptrdiff_t Index;
+	typedef thrust::tuple<NUMERIC,Index> Element;
+
+	struct Direct {
+		__host__ __device__
+		static Element identity() {
+			return thrust::make_tuple(my_numeric_limits<NUMERIC>::max(), (Index)-1);
+		}
+
+		struct transformer : thrust::unary_function<Element, Element> {
+			__host__ __device__
+			Element operator()(const Element& v) const {
+				return v;
+			}
+		};
+
+		struct reducer : thrust::binary_function<Element, Element, Element> {
+			__host__ __device__
+			Element operator()(const Element& lhs, const Element& rhs) const {
+				return thrust::get<0>(lhs) < thrust::get<0>(rhs) ? lhs : rhs;
+			}
+		};
+	};
+};
+
+enum FEVMode {
+	FEV_THRUST,
+	// FEV_REDUCE_K0,
+};
+
+#ifndef FEV_MODE_DEFAULT
+	#define FEV_MODE_DEFAULT FEV_THRUST
+#endif
+static const bool fev_mode = FEV_MODE_DEFAULT;
+
+#define FEV_BLOCK_HEIGHT ((int)16)
+ptrdiff_t find_entering_variable(const util::PointerAndSize<double>& first_row) {
+	typedef FEVComputation<double> FEVComp;
+	typedef FEVComp::Index Index;
+
+	ptrdiff_t col_index = -1;
+	if (fev_mode == FEV_THRUST) {
+		FEVComp::Element reduced = thrust::transform_reduce(
+			thrust::cuda::par,
+			thrust::make_zip_iterator(thrust::make_tuple(
+				first_row.begin() + 1,
+				thrust::counting_iterator<ptrdiff_t>(1)
+			)),
+			thrust::make_zip_iterator(thrust::make_tuple(
+				first_row.end(),
+				thrust::counting_iterator<ptrdiff_t>(-1)
+			)),
+			FEVComp::Direct::transformer(),
+			FEVComp::Direct::identity(),
+			FEVComp::Direct::reducer()
+		);
+
+		if (thrust::get<0>(reduced) < 0) {
+			col_index = thrust::get<1>(reduced);
+		}
+	}
+
+	if (col_index > 0) {
+		std::cout << "      found entering variable: var" << col_index << '\n';
+	} else {
+		std::cout << "      did not find a entering variable\n";
+	}
+
+	return col_index;
+}
+
 #define K1_BLOCK_HEIGHT ((int)8)
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering) {
 	assert(tab.height() % K1_BLOCK_HEIGHT == 0);

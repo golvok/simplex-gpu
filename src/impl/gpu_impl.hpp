@@ -38,6 +38,8 @@ struct ProblemContraints {
 	std::ptrdiff_t  width_modulus;
 };
 
+ptrdiff_t find_entering_variable(const util::PointerAndSize<double>& first_row);
+
 ThetaValuesAndEnteringColumn<double> get_theta_values_and_entering_column(const Tableau<double>& tab, VariableIndex entering);
 
 ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tvals_and_centering);

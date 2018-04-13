@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
+static const bool use_cpu_find_entering = false;
 static const bool use_cpu_find_leaving = false;
 
 namespace simplex{
@@ -58,10 +59,22 @@ boost::variant<
 		}
 
 
-		using cpu::find_entering_variable;
-		cudaMemcpy(cpu_first_row.data(), gpu_tableau.data(), (std::size_t)cpu_first_row.data_size(), cudaMemcpyDeviceToHost);
-		const auto entering_var = find_entering_variable(cpu_first_row);
-		// const auto entering_var = &entering_var_storage;
+		boost::optional<VariableIndex> entering_var;
+		if (use_cpu_find_entering) {
+			using cpu::find_entering_variable;
+			cudaMemcpy(cpu_first_row.data(), gpu_tableau.data(), (std::size_t)cpu_first_row.data_size(), cudaMemcpyDeviceToHost);
+			entering_var = find_entering_variable(cpu_first_row);
+		} else {
+			const auto indent = dout(DL::DBG1).indentWithTitle("find_entering_variable");
+
+			using gpu::find_entering_variable;
+			util::PointerAndSize<double> gpu_first_row(gpu_tableau.data(), gpu_tableau.width());
+			const auto entering_var_raw = find_entering_variable(gpu_first_row);
+
+			if (entering_var_raw >= 0) {
+				entering_var = util::make_id<VariableIndex>((VariableIndex::IDType)entering_var_raw);
+			}
+		}
 
 		if (!entering_var) {
 			dout(DL::INFO) << "Solution reached!\n";
