@@ -375,9 +375,9 @@ reduce5(T* g_idata, T* g_odata, unsigned int n) {
 	In other words if blockSize <= 32, allocate 64*sizeof(T) bytes.
 	If blockSize > 32, allocate blockSize*sizeof(T) bytes.
 */
-template <class T, unsigned int blockSize, bool nIsPow2>
+template <class T, unsigned int blockSize, bool nIsPow2, typename InputIt, typename Computation>
 __global__ void
-reduce6(T* g_idata, T* g_odata, unsigned int n) {
+reduce6(InputIt g_idata, T* g_odata, unsigned int n, Computation c) {
 	T* sdata = SharedMemory<T>();
 
 	// perform first level of reduction,
@@ -386,17 +386,17 @@ reduce6(T* g_idata, T* g_odata, unsigned int n) {
 	unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
 	unsigned int gridSize = blockSize*2*gridDim.x;
 
-	T mySum = 0;
+	T mySum = c.identity();
 
 	// we reduce multiple elements per thread.  The number is determined by the
 	// number of active thread blocks (via gridDim).  More blocks will result
 	// in a larger gridSize and therefore fewer elements per thread
 	while (i < n) {
-		mySum += g_idata[i];
+		mySum = c.reduce(mySum, c.transform(g_idata[i]));
 
 		// ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
 		if (nIsPow2 || i + blockSize < n)
-			mySum += g_idata[i+blockSize];
+			mySum = c.reduce(mySum, c.transform(g_idata[i+blockSize]));
 
 		i += gridSize;
 	}
@@ -408,19 +408,19 @@ reduce6(T* g_idata, T* g_odata, unsigned int n) {
 
 	// do reduction in shared mem
 	if ((blockSize >= 512) && (tid < 256)) {
-		sdata[tid] = mySum = mySum + sdata[tid + 256];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid + 256]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >= 256) &&(tid < 128)) {
-		sdata[tid] = mySum = mySum + sdata[tid + 128];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid + 128]);
 	}
 
 	 __syncthreads();
 
 	if ((blockSize >= 128) && (tid <  64)) {
-	   sdata[tid] = mySum = mySum + sdata[tid +  64];
+	   sdata[tid] = mySum = c.reduce(mySum, sdata[tid +  64]);
 	}
 
 	__syncthreads();
@@ -428,46 +428,46 @@ reduce6(T* g_idata, T* g_odata, unsigned int n) {
 #if (__CUDA_ARCH__ >= 300 )
 	if ( tid < 32 ) {
 		// Fetch final intermediate sum from 2nd warp
-		if (blockSize >=  64) mySum += sdata[tid + 32];
+		if (blockSize >=  64) mySum = c.reduce(mySum, sdata[tid + 32]);
 		// Reduce final warp using shuffle
 		for (int offset = warpSize/2; offset > 0; offset /= 2) {
-			mySum += __shfl_down(mySum, offset);
+			mySum = c.reduce(mySum, __shfl_down(mySum, offset));
 		}
 	}
 #else
 	// fully unroll reduction within a single warp
 	if ((blockSize >=  64) && (tid < 32)) {
-		sdata[tid] = mySum = mySum + sdata[tid + 32];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid + 32]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >=  32) && (tid < 16)) {
-		sdata[tid] = mySum = mySum + sdata[tid + 16];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid + 16]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >=  16) && (tid <  8)) {
-		sdata[tid] = mySum = mySum + sdata[tid +  8];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid +  8]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >=   8) && (tid <  4)) {
-		sdata[tid] = mySum = mySum + sdata[tid +  4];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid +  4]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >=   4) && (tid <  2)) {
-		sdata[tid] = mySum = mySum + sdata[tid +  2];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid +  2]);
 	}
 
 	__syncthreads();
 
 	if ((blockSize >=   2) && ( tid <  1)) {
-		sdata[tid] = mySum = mySum + sdata[tid +  1];
+		sdata[tid] = mySum = c.reduce(mySum, sdata[tid +  1]);
 	}
 
 	__syncthreads();
