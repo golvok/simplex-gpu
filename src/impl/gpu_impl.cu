@@ -211,10 +211,11 @@ struct FLVComputation {
 enum FLVMode {
 	FLV_THRUST,
 	FLV_REDUCE_K0,
+	FLV_REDUCE_K6,
 };
 
 #ifndef FLV_MODE_DEFAULT
-	#define FLV_MODE_DEFAULT FLV_THRUST
+	#define FLV_MODE_DEFAULT FLV_REDUCE_K6
 #endif
 static const bool flv_mode = FLV_MODE_DEFAULT;
 
@@ -223,19 +224,19 @@ ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tval
 	typedef FLVComputation<double> FLVComp;
 	typedef FLVComp::Index Index;
 
-	ptrdiff_t row_index = -1;
+	Index row_index = -1;
 	if (flv_mode == FLV_THRUST) {
 		row_index = thrust::get<2>(thrust::transform_reduce(
 			thrust::cuda::par,
 			thrust::make_zip_iterator(thrust::make_tuple(
 				tvals_and_centering.theta_values.begin() + 1,
 				tvals_and_centering.entering_column.begin() + 1,
-				thrust::counting_iterator<ptrdiff_t>(1)
+				thrust::counting_iterator<Index>(1)
 			)),
 			thrust::make_zip_iterator(thrust::make_tuple(
 				tvals_and_centering.theta_values.end(),
 				tvals_and_centering.entering_column.end(),
-				thrust::counting_iterator<ptrdiff_t>(-1)
+				thrust::counting_iterator<Index>(-1)
 			)),
 			FLVComp::Direct::transformer(),
 			FLVComp::Direct::identity(),
@@ -248,9 +249,9 @@ ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tval
 
 		thrust::device_vector<Index> row_index_storage(1);
 
-		int numBlocks = tab_height/FLV_BLOCK_HEIGHT;
-		int threadsPerBlock = FLV_BLOCK_HEIGHT;
-		int smemSize = (threadsPerBlock <= 32) ? 2 * threadsPerBlock * sizeof(Index) : threadsPerBlock * sizeof(Index);
+		static const int numBlocks = tab_height/FLV_BLOCK_HEIGHT;
+		static const int threadsPerBlock = FLV_BLOCK_HEIGHT;
+		static const int smemSize = (threadsPerBlock <= 32) ? 2 * threadsPerBlock * sizeof(Index) : threadsPerBlock * sizeof(Index);
 
 		if (flv_mode == FLV_REDUCE_K0) {
 			reductions::reduce0<Index><<< numBlocks, threadsPerBlock, smemSize >>>(
@@ -259,7 +260,15 @@ ptrdiff_t find_leaving_variable(const ThetaValuesAndEnteringColumn<double>& tval
 				tab_height - 1,
 				FLVComp::Indirect(tvals_and_centering)
 			);
-			Index row_index = *row_index_storage.data();
+			row_index = *row_index_storage.data();
+		} else if (flv_mode == FLV_REDUCE_K6) {
+			reductions::reduce6<Index, threadsPerBlock, true><<< numBlocks, threadsPerBlock, smemSize >>>(
+				thrust::counting_iterator<Index>(1),
+				row_index_storage.data().get(),
+				tab_height - 1,
+				FLVComp::Indirect(tvals_and_centering)
+			);
+			row_index = *row_index_storage.data();
 		}
 	}
 
