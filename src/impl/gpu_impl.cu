@@ -170,7 +170,12 @@ struct FLVComputation {
 
 		__host__ __device__
 		Index should_reduce(const Index& v) const {
-			return v != identity() && entering_column[v] > 0;
+			if (v != identity() && entering_column[v] > 0) {
+				return true;
+			} else {
+				// printf("ignoring %ld\n", v);
+				return false;
+			}
 		}
 
 		__host__ __device__
@@ -185,13 +190,17 @@ struct FLVComputation {
 		__host__ __device__
 		Index reduce(const Index& lhs, const Index& rhs) const {
 			if (lhs == identity()) {
+				// printf("chooose: lhs=%ld, rhs=%d; RHS\n", lhs, rhs);
 				return rhs;
 			} else if (rhs == identity()) {
+				// printf("chooose: lhs=%ld, rhs=%d; LHS\n", lhs, rhs);
 				return lhs;
 			} else {
 				if (theta_values[lhs] < theta_values[rhs]) {
+					// printf("chooose: lhs=%ld, rhs=%d; LHS\n", lhs, rhs);
 					return lhs;
 				} else {
+					// printf("chooose: lhs=%ld, rhs=%d; RHS\n", lhs, rhs);
 					return rhs;
 				}
 			}
