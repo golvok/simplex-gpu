@@ -19,6 +19,19 @@ __global__ void kernel2(double* SimplexTableau, int width, const double* columnK
 __global__ void kernel3(double* SimplexTableau, int width, int height, const double* columnK, int r);
 __global__ void kernel4(double* SimplexTableau, int width, const double* columnK, int k, int r);
 
+namespace {
+	template<typename T>
+	struct my_numeric_limits;
+
+	template<> struct my_numeric_limits<double> {
+		__host__ __device__ static double max() { return 1.0/0; }
+	};
+
+	template<> struct my_numeric_limits<float> {
+		__host__ __device__ static float max() { return 1.0f/0; }
+	};
+}
+
 namespace simplex {
 namespace gpu {
 
@@ -46,7 +59,7 @@ struct FLVComputation {
 	struct Direct {
 		__host__ __device__
 		static NumericTuple identity() {
-			return thrust::make_tuple(std::numeric_limits<NUMERIC>::max(), 0.0f, (Index)-1);
+			return thrust::make_tuple(my_numeric_limits<NUMERIC>::max(), 0.0f, (Index)-1);
 		}
 
 		struct transformer : thrust::unary_function<NumericTuple, NumericTuple> {
