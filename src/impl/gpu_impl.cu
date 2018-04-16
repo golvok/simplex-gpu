@@ -215,7 +215,7 @@ enum FLVMode {
 };
 
 #ifndef FLV_MODE_DEFAULT
-	#define FLV_MODE_DEFAULT FLV_REDUCE_K6
+	#define FLV_MODE_DEFAULT FLV_THRUST
 #endif
 static const bool flv_mode = FLV_MODE_DEFAULT;
 
